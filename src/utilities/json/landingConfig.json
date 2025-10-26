@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "title": "Ping - Connect & Chat Instantly",
+    "description": "Experience real-time messaging with Ping. Connect with friends, collaborate with teams, and stay in touch with the people that matter most.",
+    "keywords": ["messaging", "chat", "real-time", "communication", "team collaboration"]
+  },
+  "branding": {
+    "logo": {
+      "text": "P",
+      "size": "w-8 h-8",
+      "color": "bg-primary",
+      "textColor": "text-primary-foreground",
+      "textSize": "text-sm font-bold"
+    },
+    "companyName": "Ping",
+    "companyNameSize": "text-xl font-bold"
+  },
+  "hero": {
+    "enabled": true,
+    "heading": {
+      "text": "Connect & Chat Instantly",
+      "highlightedWord": "Chat",
+      "highlightedWordIndex": 1,
+      "size": "text-5xl lg:text-6xl font-bold",
+      "gradient": "bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+    },
+    "description": "Experience real-time messaging with Ping. Connect with friends, collaborate with teams, and stay in touch with the people that matter most.",
+    "ctaButtons": [
+      {
+        "id": "primary",
+        "text": "Get Started Free",
+        "href": "/signup",
+        "variant": "primary",
+        "className": "bg-primary hover:bg-primary/90 text-primary-foreground h-[45px] px-8 text-lg rounded overflow-hidden font-semibold flex items-center"
+      },
+      {
+        "id": "secondary",
+        "text": "Sign In",
+        "href": "/login",
+        "variant": "outline",
+        "className": "border border-border/40 rounded text-primary hover:bg-border/10 px-8 h-[45px] text-lg flex items-center"
+      }
+    ],
+    "stats": [
+      {
+        "id": "users",
+        "value": "10K+",
+        "label": "Active Users"
+      },
+      {
+        "id": "messages",
+        "value": "1M+",
+        "label": "Messages Sent"
+      },
+      {
+        "id": "uptime",
+        "value": "99.9%",
+        "label": "Uptime"
+      }
+    ],
+    "animation": {
+      "enabled": true,
+      "type": "lottie",
+      "file": "chattingAnimationLanding.json",
+      "height": 450,
+      "width": 500
+    }
+  },
+  "features": {
+    "enabled": true,
+    "heading": {
+      "text": "Why Choose Ping?",
+      "size": "text-3xl lg:text-4xl font-bold"
+    },
+    "description": "Built for modern communication with features that make chatting effortless and enjoyable.",
+    "items": [
+      {
+        "id": "fast",
+        "icon": "lightning",
+        "title": "Lightning Fast",
+        "description": "Real-time messaging with instant delivery and read receipts for seamless communication."
+      },
+      {
+        "id": "secure",
+        "icon": "lock",
+        "title": "Secure & Private",
+        "description": "End-to-end encryption ensures your conversations remain private and secure."
+      },
+      {
+        "id": "collaboration",
+        "icon": "users",
+        "title": "Team Collaboration",
+        "description": "Create groups, share files, and collaborate with your team in one unified platform."
+      }
+    ]
+  },
+  "cta": {
+    "enabled": true,
+    "heading": "Ready to Start Chatting?",
+    "description": "Join thousands of users who are already enjoying seamless communication with Ping.",
+    "buttons": [
+      {
+        "id": "primary",
+        "text": "Create Free Account",
+        "href": "/signup",
+        "variant": "primary",
+        "className": "bg-primary hover:bg-primary/90 text-primary-foreground h-[45px] px-8 text-lg rounded overflow-hidden font-semibold flex items-center"
+      },
+      {
+        "id": "secondary",
+        "text": "Sign In",
+        "href": "/login",
+        "variant": "outline",
+        "className": "border border-border/40 rounded text-primary hover:bg-border/10 px-8 h-[45px] text-lg flex items-center"
+      }
+    ],
+    "background": "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10"
+  },
+  "footer": {
+    "enabled": true,
+    "copyright": "© 2024 Ping. All rights reserved.",
+    "className": "border-t border-border bg-card/50"
+  },
+  "layout": {
+    "container": {
+      "className": "min-h-screen bg-background relative overflow-hidden"
+    },
+    "background": {
+      "className": "absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5"
+    },
+    "sections": {
+      "spacing": "py-20",
+      "container": "container mx-auto px-6"
+    }
+  }
+}

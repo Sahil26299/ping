@@ -1,0 +1,180 @@
+{
+  "branding": {
+    "logo": {
+      "text": "P",
+      "size": "w-16 h-16",
+      "color": "bg-primary",
+      "textColor": "text-primary-foreground",
+      "textSize": "text-2xl font-bold"
+    },
+    "title": "Welcome to Ping",
+    "subtitle": {
+      "login": "Sign in to your account to continue",
+      "signup": "Create your account to get started"
+    }
+  },
+  "forms": {
+    "login": {
+      "fields": [
+        {
+          "id": "email",
+          "type": "email",
+          "label": "Email Address",
+          "placeholder": "Enter your email",
+          "required": true,
+          "validation": {
+            "required": "Email is required",
+            "pattern": {
+              "regex": "^\\S+@\\S+\\.\\S+$",
+              "message": "Please enter a valid email"
+            }
+          }
+        },
+        {
+          "id": "password",
+          "type": "password",
+          "label": "Password",
+          "placeholder": "Enter your password",
+          "required": true,
+          "showToggle": true,
+          "validation": {
+            "required": "Password is required",
+            "minLength": {
+              "value": 6,
+              "message": "Password must be at least 6 characters"
+            }
+          }
+        }
+      ],
+      "options": {
+        "rememberMe": {
+          "enabled": true,
+          "label": "Remember me"
+        },
+        "forgotPassword": {
+          "enabled": true,
+          "label": "Forgot password?"
+        }
+      },
+      "submitButton": {
+        "text": "Sign In",
+        "loadingText": "Signing in...",
+        "size": "w-full h-11 text-base font-medium"
+      },
+      "socialLogin": {
+        "enabled": true,
+        "provider": "google",
+        "text": "Continue with Google"
+      },
+      "footer": {
+        "text": "Don't have an account?",
+        "linkText": "Sign up",
+        "linkHref": "/signup"
+      }
+    },
+    "signup": {
+      "fields": [
+        {
+          "id": "username",
+          "type": "text",
+          "label": "Username",
+          "placeholder": "Enter your username",
+          "required": true,
+          "validation": {
+            "required": "Username is required",
+            "pattern": {
+              "regex": "^[^@]+$",
+              "message": "Username cannot contain @ character"
+            },
+            "minLength": {
+              "value": 3,
+              "message": "Username must be at least 3 characters"
+            },
+            "maxLength": {
+              "value": 20,
+              "message": "Username cannot exceed 20 characters"
+            }
+          },
+          "description": "This will be used for mentioning you in conversations"
+        },
+        {
+          "id": "email",
+          "type": "email",
+          "label": "Email Address",
+          "placeholder": "Enter your email",
+          "required": true,
+          "validation": {
+            "required": "Email is required",
+            "pattern": {
+              "regex": "^\\S+@\\S+\\.\\S+$",
+              "message": "Please enter a valid email"
+            }
+          }
+        },
+        {
+          "id": "password",
+          "type": "password",
+          "label": "Password",
+          "placeholder": "Enter your password",
+          "required": true,
+          "showToggle": true,
+          "validation": {
+            "required": "Password is required",
+            "minLength": {
+              "value": 6,
+              "message": "Password must be at least 6 characters"
+            }
+          }
+        }
+      ],
+      "options": {
+        "rememberMe": {
+          "enabled": false,
+          "label": "Remember me"
+        },
+        "forgotPassword": {
+          "enabled": false,
+          "label": "Forgot password?"
+        }
+      },
+      "submitButton": {
+        "text": "Sign Up",
+        "loadingText": "Creating account...",
+        "size": "w-full h-11 text-base font-medium"
+      },
+      "socialLogin": {
+        "enabled": true,
+        "provider": "google",
+        "text": "Continue with Google"
+      },
+      "footer": {
+        "text": "Already have an account?",
+        "linkText": "Log In",
+        "linkHref": "/login"
+      }
+    }
+  },
+  "layout": {
+    "container": {
+      "className": "min-h-screen bg-background flex items-center justify-center p-4"
+    },
+    "formContainer": {
+      "className": "w-full max-w-md"
+    },
+    "brandingSection": {
+      "className": "text-center mb-8"
+    },
+    "formCard": {
+      "className": "bg-card border border-border rounded-lg shadow-lg p-6"
+    },
+    "divider": {
+      "className": "relative my-6",
+      "text": "Or continue with"
+    }
+  },
+  "validation": {
+    "showErrors": true,
+    "errorClassName": "text-sm text-destructive",
+    "inputErrorClassName": "border-destructive"
+  }
+}
