@@ -1,4 +1,12 @@
-import { Settings, HelpCircle, LogOut, User, SearchCheck } from "lucide-react";
+import {
+  Settings,
+  HelpCircle,
+  LogOut,
+  User,
+  SearchCheck,
+  Users,
+  Heart,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,54 +23,44 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import CustomSearchInput from "../animatedSeachInput/CustomSearchInput";
-import { useMemo, useState } from "react";
-import { GenericObjectInterface, keys, setSessionStorageItem, userType } from "@/src/utilities";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  firebaseCollections,
+  GenericObjectInterface,
+  inputChangeEventType,
+  keys,
+  setSessionStorageItem,
+  userType,
+} from "@/src/utilities";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-
-const users = [
-  {
-    id: 1,
-    name: "User 1",
-    url: "#",
-    icon: "https://github.com/shadcn.png",
-  },
-  {
-    id: 2,
-    name: "User 2",
-    url: "#",
-    icon: "https://github.com/shadcn.png",
-  },
-  {
-    id: 3,
-    name: "User 3",
-    url: "#",
-    icon: "https://github.com/shadcn.png",
-  },
-];
-const groups = [
-  {
-    id: 4,
-    name: "Group 1",
-    url: "#",
-    icon: "https://github.com/shadcn.png",
-  },
-  {
-    id: 5,
-    name: "Group 2",
-    url: "#",
-    icon: "https://github.com/shadcn.png",
-  },
-];
+import ProfilePictureDialogue from "../profilePicDialogBox/ProfilePictureDialogue";
+import { Dialog } from "@/components/ui/dialog";
+import { doc, updateDoc } from "firebase/firestore";
+import { toast } from "sonner";
 
 export function AppSidebar({
   recipientDetails,
+  usersList,
+  userDetails,
 }: {
   recipientDetails: userType | GenericObjectInterface;
+  userDetails: userType | GenericObjectInterface;
+  usersList: GenericObjectInterface;
 }) {
   const router = useRouter();
   const [searchedText, setSearchedText] = useState("");
+  const [openProfilePicture, setOpenProfilePicture] = useState(false);
+  const [imageSrc, setimageSrc] = useState("");
+  const [imageSrcFinal, setImageSrcFinal] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    console.log(userDetails.profilePic,'userDetails.profilePic');
+    
+    setImageSrcFinal(userDetails.profilePic || "");
+  }, [userDetails]);
 
   const handleSearch = (value: string) => {
     setSearchedText(value);
@@ -70,17 +68,16 @@ export function AppSidebar({
 
   const searchResults = useMemo(() => {
     let result = {
-      users,
-      groups,
+      users: usersList,
     };
     if (searchedText !== "") {
       result = {
-        users: users.filter((el) =>
-          el?.name?.toLowerCase()?.includes(searchedText)
+        users: usersList.filter((el: userType) =>
+          el?.user_name?.toLowerCase()?.includes(searchedText)
         ),
-        groups: groups.filter((el) =>
-          el?.name?.toLowerCase()?.includes(searchedText)
-        ),
+        // groups: groups.filter((el) =>
+        //   el?.name?.toLowerCase()?.includes(searchedText)
+        // ),
       };
     }
 
@@ -91,22 +88,91 @@ export function AppSidebar({
     setSessionStorageItem(keys.RECIPIENT_SELECTED, user);
   };
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     try {
       await signOut(auth);
+    } catch (error) {}
+  };
+
+  const handleProfilePicChange = () => {
+    if (fileInputRef?.current) {
+      fileInputRef?.current?.click();
+    }
+  };
+  const handleProfilDialogClose = useCallback((croppedImage?: string) => {
+    if (croppedImage !== undefined) {
+      setImageSrcFinal(croppedImage);
+      handleSubmitImage(croppedImage);
+    }
+    setOpenProfilePicture(false);
+  }, [userDetails]);
+
+  const handleSubmitImage = async (croppedImage: string) => {
+    console.log(croppedImage, userDetails, 'croppedImage');
+    
+    try {
+      const userDocRef = doc(db, firebaseCollections.USERS, userDetails?.uid);
+      await updateDoc(userDocRef, {
+        profilePic: croppedImage,
+      });
+      toast("Profile pic updated!");
     } catch (error) {
+      console.log(error, "error");
       
     }
-  }
+  };
+
+  const handleDrop = (files: inputChangeEventType) => {
+    if (files?.target?.files?.length && files?.target?.files?.length > 0) {
+      setOpenProfilePicture(true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const binaryStr = reader.result;
+        setimageSrc(binaryStr as string);
+      };
+      if (files?.target?.files) {
+        reader.readAsDataURL(files?.target?.files["0"] as Blob);
+      }
+    }
+  };
 
   return (
     <Sidebar className="border-border/40">
       <SidebarHeader className="border-b border-border/40 h-[60px]">
         <div className="flex items-center gap-2 p-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-sm font-bold">P</span>
-          </div>
-          <span className="text-lg font-semibold">Ping</span>
+          <Dialog open={openProfilePicture}>
+            <Button
+              className="h-8 w-8 rounded-full bg-primary overflow-hidden p-0"
+              onClick={handleProfilePicChange}
+            >
+              <Avatar className="h-full w-full flex items-center justify-center">
+                <AvatarImage
+                  src={imageSrcFinal}
+                  className="object-contain h-full w-full"
+                />
+                <AvatarFallback>
+                  {userDetails.user_name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+            <input
+              ref={fileInputRef}
+              title="File"
+              type="file"
+              style={{ display: "none" }}
+              accept="image/png, image/jpeg, image/jpg"
+              name="imageUpload"
+              id=""
+              onChange={handleDrop}
+            />
+            <ProfilePictureDialogue
+              onClose={handleProfilDialogClose}
+              imageSrc={imageSrc}
+            />
+          </Dialog>
+          <span className="text-[16px] font-semibold">
+            {userDetails?.user_name} (You)
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent className="overflow-hidden ">
@@ -122,26 +188,43 @@ export function AppSidebar({
         {searchedText === "" ? (
           <>
             <SidebarGroup>
-              <SidebarGroupLabel>Users</SidebarGroupLabel>
+              <SidebarGroupLabel className=" flex items-center gap-2">
+                <Heart size={16} />
+                Friends
+              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {users.map((user: userType) => (
-                    <SidebarMenuItem key={user.name}>
+                  {usersList.map((user: userType) => (
+                    <SidebarMenuItem key={user.uid}>
                       <SidebarMenuButton
                         onClick={() => handleClick(user)}
                         asChild
-                        className={`hover:bg-background active:bg-background ${recipientDetails?.id === user?.id ? "bg-background" : ""}`}
+                        className={`cursor-pointer hover:bg-background active:bg-background ${
+                          recipientDetails?.uid === user?.uid
+                            ? "bg-background"
+                            : ""
+                        }`}
                       >
-                        <a href={user.url}>
-                          <Avatar className="h-6 w-6 rounded-full overflow-hidden">
+                        <div>
+                          <Avatar className="h-6 w-6 rounded-full bg-primary overflow-hidden flex items-center justify-center">
                             <AvatarImage
-                              src={user.icon}
+                              src={user.profilePic}
                               className="object-cover"
                             />
-                            <AvatarFallback>G1</AvatarFallback>
+                            <AvatarFallback>
+                              {user.user_name?.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
-                          <span className={`${recipientDetails?.id === user?.id ? "text-secondary-foreground" : ""}`} >{user.name}</span>
-                        </a>
+                          <span
+                            className={`${
+                              recipientDetails?.uid === user?.uid
+                                ? "text-secondary-foreground"
+                                : ""
+                            }`}
+                          >
+                            {user.user_name}
+                          </span>
+                        </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -152,13 +235,23 @@ export function AppSidebar({
             <SidebarGroup>
               <SidebarGroupLabel>Groups</SidebarGroupLabel>
               <SidebarGroupContent>
+                <span className="text-foreground/40 text-sm italic flex items-center gap-2">
+                  {" "}
+                  <Users size={18} /> Coming soon...
+                </span>
+              </SidebarGroupContent>
+              {/* <SidebarGroupContent>
                 <SidebarMenu>
                   {groups.map((group: userType) => (
                     <SidebarMenuItem key={group.name}>
                       <SidebarMenuButton
                         onClick={() => handleClick(group)}
                         asChild
-                        className={`hover:bg-background active:bg-background ${recipientDetails?.id === group?.id ? "bg-background" : ""}`}
+                        className={`hover:bg-background active:bg-background ${
+                          recipientDetails?.id === group?.id
+                            ? "bg-background"
+                            : ""
+                        }`}
                       >
                         <a href={group.url}>
                           <Avatar className="h-6 w-6 rounded-full overflow-hidden">
@@ -168,13 +261,21 @@ export function AppSidebar({
                             />
                             <AvatarFallback>G1</AvatarFallback>
                           </Avatar>
-                          <span className={`${recipientDetails?.id === group?.id ? "text-secondary-foreground" : ""}`}>{group.name}</span>
+                          <span
+                            className={`${
+                              recipientDetails?.id === group?.id
+                                ? "text-secondary-foreground"
+                                : ""
+                            }`}
+                          >
+                            {group.name}
+                          </span>
                         </a>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
-              </SidebarGroupContent>
+              </SidebarGroupContent> */}
             </SidebarGroup>
           </>
         ) : (
@@ -202,22 +303,36 @@ export function AppSidebar({
                           searchResults[
                             resultType as keyof typeof searchResults
                           ].map((user: userType) => (
-                            <SidebarMenuItem key={user.name}>
+                            <SidebarMenuItem key={user.user_name}>
                               <SidebarMenuButton
                                 onClick={() => handleClick(user)}
                                 asChild
-                                className={`hover:bg-background active:bg-background ${recipientDetails?.id === user?.id ? "bg-background" : ""}`}
+                                className={`cursor-pointer hover:bg-background active:bg-background ${
+                                  recipientDetails?.uid === user?.uid
+                                    ? "bg-background"
+                                    : ""
+                                }`}
                               >
-                                <a href={user.url}>
-                                  <Avatar className="h-6 w-6 rounded-full overflow-hidden">
+                                <div>
+                                  <Avatar className="h-6 w-6 rounded-full bg-primary overflow-hidden flex items-center justify-center">
                                     <AvatarImage
-                                      src={user.icon}
+                                      src={user.profilePic}
                                       className="object-cover"
                                     />
-                                    <AvatarFallback>G1</AvatarFallback>
+                                    <AvatarFallback>
+                                      {user.user_name?.charAt(0)}
+                                    </AvatarFallback>
                                   </Avatar>
-                                  <span className={`${recipientDetails?.id === user?.id ? "text-secondary-foreground" : ""}`} >{user.name}</span>
-                                </a>
+                                  <span
+                                    className={`${
+                                      recipientDetails?.uid === user?.uid
+                                        ? "text-secondary-foreground"
+                                        : ""
+                                    }`}
+                                  >
+                                    {user.user_name}
+                                  </span>
+                                </div>
                               </SidebarMenuButton>
                             </SidebarMenuItem>
                           ))

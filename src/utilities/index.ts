@@ -12,6 +12,7 @@ import {
   CustomResponse,
   LottieFileType,
   lottieAnimProviderProptypes,
+  SimpleDialogProps
 } from "./commonInterface/commonInterfaces";
 import {
   keys,
@@ -43,7 +44,13 @@ import {
   getLandingConfig,
   LandingConfig,
 } from "./commonInterface/landingConfig";
-
+import {
+  BASE_URL,
+  endpoints,
+  headersList,
+  makeApiRequest,
+  firebaseCollections,
+} from "./apiconfig/apiConfig";
 export {
   poppins,
   keys,
@@ -60,6 +67,11 @@ export {
   validateForm,
   getLandingConfig,
   firebaseAuthService,
+  BASE_URL,
+  endpoints,
+  headersList,
+  makeApiRequest,
+  firebaseCollections,
 };
 export type {
   FieldConfig,
@@ -81,4 +93,5 @@ export type {
   lottieAnimProviderProptypes,
   firebaseAuthType,
   metaType,
+  SimpleDialogProps
 };

@@ -1,25 +1,17 @@
 "use client";
 import * as React from "react";
-import { Download, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
-import {
-  GenericObjectInterface,
-  getSessionStorageItem,
-  keys,
-  userType,
-} from "@/src/utilities";
+import { GenericObjectInterface, userType } from "@/src/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
 
 function ThemeToggleButton() {
   const { theme, setTheme } = useTheme();
@@ -48,9 +40,7 @@ export default function Navbar({
   // Landing page variant
   if (variant === "landing") {
     return (
-      <NavigationMenu
-        className="primary-background w-full max-w-full justify-between h-[60px] px-4 shadow dark:border-b dark:border-border/40 sticky top-0 z-10"
-      >
+      <NavigationMenu className="primary-background w-full max-w-full justify-between h-[60px] px-4 shadow dark:border-b dark:border-border/40 sticky top-0 z-10">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <span className="text-primary-foreground text-sm font-bold">P</span>
@@ -91,16 +81,13 @@ export default function Navbar({
           <SidebarTrigger />
         </NavigationMenuItem>
       </NavigationMenuList>
-      {(recipientDetails && recipientDetails?.name && (
+      {(recipientDetails && recipientDetails?.user_name && (
         <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6 rounded-full overflow-hidden">
-            <AvatarImage
-              src={recipientDetails?.icon}
-              className="object-cover"
-            />
-            <AvatarFallback></AvatarFallback>
+          <Avatar className="h-6 w-6 rounded-full bg-primary overflow-hidden flex items-center justify-center">
+            <AvatarImage src={recipientDetails.profilePic} className="object-cover" />
+            <AvatarFallback>{recipientDetails.user_name?.charAt(0)}</AvatarFallback>
           </Avatar>
-          <span className="font-medium">{recipientDetails?.name}</span>
+          <span className="font-medium">{recipientDetails?.user_name}</span>
         </div>
       )) ||
         ""}

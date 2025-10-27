@@ -27,11 +27,11 @@ function ChatSection({
     },
   ]);
 
-  if (!recipientDetails || !recipientDetails.name) {
+  if (!recipientDetails || !recipientDetails.user_name) {
     return (
-      <div className="h-[calc(100vh-60px)] w-full flex flex-col items-center justify-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <span className="text-3xl font-bold">P</span>
+      <div className="h-[calc(100vh-60px)] w-full flex flex-col items-center justify-center gap-1">
+        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <span className="text-4xl font-bold">P</span>
         </div>
       </div>
     );

@@ -27,10 +27,12 @@ export interface GenericObjectInterface {
 export type ArrayOfStringType = string[];
 
 export interface userType {
-  id: number;
-  name: string;
-  url: string;
-  icon: string;
+  uid: number;
+  created_at: Date;
+  user_name: string;
+  email: string;
+  profilePic: string;
+  apiKey?: string;
 }
 
 export interface inputMessageType {
@@ -44,11 +46,10 @@ export interface chatMessage {
   is_self: boolean;
   sender: number;
   recipient: number;
-  created_at: Date
+  created_at: Date;
 }
-export interface ChatMessagesProps{
-  messages: chatMessage[]
-  
+export interface ChatMessagesProps {
+  messages: chatMessage[];
 }
 
 /**
@@ -69,4 +70,12 @@ export interface lottieAnimProviderProptypes {
   autoplay?: boolean;
   loop?: boolean;
   lottieStyle?: React.CSSProperties;
+}
+
+/**
+ * Profile picture dialog props
+ */
+export interface SimpleDialogProps {
+  onClose: (value?: string) => void;
+  imageSrc: string;
 }

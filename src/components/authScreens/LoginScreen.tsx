@@ -4,7 +4,6 @@ import { firebaseAuthService, getFormConfig } from "@/src/utilities";
 import { UserCredential } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { useRouter } from "next/navigation";
 
 function LoginScreen() {
@@ -21,15 +20,8 @@ function LoginScreen() {
       const { user } = userCredentials;
       if (user.emailVerified) {
         // if emeil is verified via verification link sent while signing up
-        toast.success("User logged in successfully!", {
-          action: {
-            label: "Continue",
-            onClick: () => router.push("/dashboard"),
-          },
-          onAutoClose: () => {
-            router.push("/dashboard");
-          },
-        });
+        toast.success("User logged in successfully!");
+        router.push("/dashboard");
       } else {
         // if not verified then show an error and ask user to resend verification link.
         toast.success("Email verification is pending!", {
@@ -75,7 +67,6 @@ function LoginScreen() {
         onSocialLogin={handleGoogleLogin}
         onFooterAction={handleNavigateToSignup}
       />
-      <Toaster position="top-center" />
     </>
   );
 }
