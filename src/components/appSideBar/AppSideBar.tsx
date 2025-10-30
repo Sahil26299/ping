@@ -39,6 +39,7 @@ import ProfilePictureDialogue from "../profilePicDialogBox/ProfilePictureDialogu
 import { Dialog } from "@/components/ui/dialog";
 import { doc, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export function AppSidebar({
   recipientDetails,
@@ -54,11 +55,10 @@ export function AppSidebar({
   const [openProfilePicture, setOpenProfilePicture] = useState(false);
   const [imageSrc, setimageSrc] = useState("");
   const [imageSrcFinal, setImageSrcFinal] = useState("");
+  const [submittingImage, setSubmittingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log(userDetails.profilePic,'userDetails.profilePic');
-    
     setImageSrcFinal(userDetails.profilePic || "");
   }, [userDetails]);
 
@@ -99,17 +99,19 @@ export function AppSidebar({
       fileInputRef?.current?.click();
     }
   };
-  const handleProfilDialogClose = useCallback((croppedImage?: string) => {
-    if (croppedImage !== undefined) {
-      setImageSrcFinal(croppedImage);
-      handleSubmitImage(croppedImage);
-    }
-    setOpenProfilePicture(false);
-  }, [userDetails]);
+  const handleProfilDialogClose = useCallback(
+    (croppedImage?: string) => {
+      if (croppedImage !== undefined) {
+        setImageSrcFinal(croppedImage);
+        handleSubmitImage(croppedImage);
+      }
+      setOpenProfilePicture(false);
+    },
+    [userDetails]
+  );
 
   const handleSubmitImage = async (croppedImage: string) => {
-    console.log(croppedImage, userDetails, 'croppedImage');
-    
+    setSubmittingImage(true);
     try {
       const userDocRef = doc(db, firebaseCollections.USERS, userDetails?.uid);
       await updateDoc(userDocRef, {
@@ -118,7 +120,8 @@ export function AppSidebar({
       toast("Profile pic updated!");
     } catch (error) {
       console.log(error, "error");
-      
+    } finally {
+      setSubmittingImage(false);
     }
   };
 
@@ -145,15 +148,19 @@ export function AppSidebar({
               className="h-8 w-8 rounded-full bg-primary overflow-hidden p-0"
               onClick={handleProfilePicChange}
             >
-              <Avatar className="h-full w-full flex items-center justify-center">
-                <AvatarImage
-                  src={imageSrcFinal}
-                  className="object-contain h-full w-full"
-                />
-                <AvatarFallback>
-                  {userDetails.user_name?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              {submittingImage ? (
+                <Spinner />
+              ) : (
+                <Avatar className="h-full w-full flex items-center justify-center">
+                  <AvatarImage
+                    src={imageSrcFinal}
+                    className="object-contain h-full w-full"
+                  />
+                  <AvatarFallback>
+                    {userDetails.user_name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+              )}
             </Button>
             <input
               ref={fileInputRef}
