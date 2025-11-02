@@ -33,6 +33,8 @@ export interface userType {
   email: string;
   profilePic: string;
   apiKey?: string;
+  isOnline?: boolean;
+  lastActive?: Date;
 }
 
 export interface inputMessageType {

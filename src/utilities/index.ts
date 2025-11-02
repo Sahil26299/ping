@@ -12,7 +12,7 @@ import {
   CustomResponse,
   LottieFileType,
   lottieAnimProviderProptypes,
-  SimpleDialogProps
+  SimpleDialogProps,
 } from "./commonInterface/commonInterfaces";
 import {
   keys,
@@ -51,6 +51,14 @@ import {
   makeApiRequest,
   firebaseCollections,
 } from "./apiconfig/apiConfig";
+import {
+  firestoreUpdateOperation,
+  firestoreSetOperation,
+  firestoreGetCollectionOperation,
+  firestoreReferDocOperation,
+  convertFirestoreTimestamp,
+  listenToChats
+} from "./commonFunctions/firestoreOperations";
 export {
   poppins,
   keys,
@@ -72,6 +80,12 @@ export {
   headersList,
   makeApiRequest,
   firebaseCollections,
+  firestoreUpdateOperation,
+  firestoreSetOperation,
+  firestoreGetCollectionOperation,
+  firestoreReferDocOperation,
+  convertFirestoreTimestamp,
+  listenToChats
 };
 export type {
   FieldConfig,
@@ -93,5 +107,5 @@ export type {
   lottieAnimProviderProptypes,
   firebaseAuthType,
   metaType,
-  SimpleDialogProps
+  SimpleDialogProps,
 };

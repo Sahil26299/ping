@@ -145,6 +145,16 @@ export const getValidationConfig = () => {
   return config.validation;
 };
 
+/**
+ * This function is used to perform the authentication service for the firebase auth.
+ * Signinwithemailandpassword - used to sign in with email and password, 
+ * CreateUserwithemailandpassword - Used to register a new user with email and password, 
+ * sendverificationlink - is used to verify email address using link sent to the email address, 
+ * updateprofile - is used to update the profile of the user,
+ * @param type - type of the authentication service to be performed,
+ * @param meta - meta data/payload for the authentication service,
+ * @returns - returns the response returned by respective auth service function,
+ */
 export const firebaseAuthService: (
   type: firebaseAuthType,
   meta: metaType | GenericObjectInterface

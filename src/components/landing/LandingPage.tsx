@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "../navbar/Navbar";
 import LottieAnimationProvider from "../lottieAnimProvider/LottieAnimationProvider";
-import chattingAnimationLanding from "../../../public/lottieFiles/chattingAnimationLanding.json";
+import chattingAnimationLanding from "@/public/lottieFiles/chattingAnimationLanding.json";
 import { getLandingConfig } from "@/src/utilities";
 
 const LandingPage: React.FC = () => {

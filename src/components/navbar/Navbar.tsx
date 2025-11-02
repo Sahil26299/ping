@@ -10,8 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
-import { GenericObjectInterface, userType } from "@/src/utilities";
+import { convertFirestoreTimestamp, GenericObjectInterface, userType } from "@/src/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime)
 
 function ThemeToggleButton() {
   const { theme, setTheme } = useTheme();
@@ -37,6 +41,8 @@ export default function Navbar({
   variant = "dashboard",
   recipientDetails,
 }: NavbarProps) {
+  console.log(recipientDetails, "recipientDetails");
+
   // Landing page variant
   if (variant === "landing") {
     return (
@@ -83,11 +89,30 @@ export default function Navbar({
       </NavigationMenuList>
       {(recipientDetails && recipientDetails?.user_name && (
         <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6 rounded-full bg-primary overflow-hidden flex items-center justify-center">
-            <AvatarImage src={recipientDetails.profilePic} className="object-cover" />
-            <AvatarFallback>{recipientDetails.user_name?.charAt(0)}</AvatarFallback>
+          <Avatar className="h-8 w-8 rounded-full bg-primary overflow-hidden flex items-center justify-center">
+            <AvatarImage
+              src={recipientDetails.profilePic}
+              className="object-cover"
+            />
+            <AvatarFallback>
+              {recipientDetails.user_name?.charAt(0)}
+            </AvatarFallback>
           </Avatar>
-          <span className="font-medium">{recipientDetails?.user_name}</span>
+
+          <section className="flex flex-col">
+            <span className="text-[16px] font-semibold leading-5">
+              {recipientDetails?.user_name}
+            </span>
+            {recipientDetails?.isOnline ? (
+              <span className="text-[11px] font-medium text-green-500 leading-3.5">
+                Online
+              </span>
+            ) : (
+              <span className="text-[11px] text-slate-400 leading-3.5">
+                Last seen {recipientDetails?.lastActive ? `${dayjs(convertFirestoreTimestamp(recipientDetails?.lastActive)).fromNow()}` : "Offline"}
+              </span>
+            )}
+          </section>
         </div>
       )) ||
         ""}

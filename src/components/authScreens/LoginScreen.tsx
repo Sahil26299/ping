@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AuthForm } from "../shared/AuthForm";
-import { firebaseAuthService, getFormConfig } from "@/src/utilities";
-import { UserCredential } from "firebase/auth";
+import {
+  firebaseAuthService,
+  firebaseCollections,
+  firestoreUpdateOperation,
+  getFormConfig,
+} from "@/src/utilities";
+import { onAuthStateChanged, UserCredential } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -9,6 +14,19 @@ import { useRouter } from "next/navigation";
 function LoginScreen() {
   const formConfig = getFormConfig("login");
   const router = useRouter();
+
+  /**
+   * onAuthStateChanged is a firebase auth listener which gets triggered automatically when the login status of user changes
+   */
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // redirect to dashboard
+        router.push("/dashboard");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSubmit = async (values: Record<string, string>) => {
     // Simulate API call
@@ -18,9 +36,20 @@ function LoginScreen() {
         values
       )) as UserCredential;
       const { user } = userCredentials;
+      console.log(user, "user");
+
       if (user.emailVerified) {
         // if emeil is verified via verification link sent while signing up
         toast.success("User logged in successfully!");
+
+        // switch the online status of user to true
+        await firestoreUpdateOperation(
+          firebaseCollections.USERS,
+          { isOnline: true },
+          [user?.uid]
+        );
+
+        // redirect to dashboard
         router.push("/dashboard");
       } else {
         // if not verified then show an error and ask user to resend verification link.
@@ -28,7 +57,7 @@ function LoginScreen() {
           description:
             "Please verify your email using the verification link sent via email during signing up.",
           action: {
-            label: "Resent Link",
+            label: "Resend Link ?",
             onClick: async () => {
               try {
                 await firebaseAuthService("sendVerificationLink", { user });

@@ -149,10 +149,10 @@ function ProfilePictureDialogue(props: SimpleDialogProps) {
                     ? `${(croppedImageSize / 1000000)?.toFixed(2)} Mb`
                     : `${(croppedImageSize / 1000)?.toFixed(2)} Kb`}
                 </span>
-                <span className={`text-[12px] ${croppedImageSize > 1048487 ? "text-red-700" : "text-green-700"}`}>
+                <span className={`text-[12px] ${croppedImageSize > 1000000 ? "text-red-700" : "text-green-700"}`}>
                   <strong>Limit:</strong>
                   <br />{" "}
-                  1.04 Mb
+                  1.00 Mb
                 </span>
               </section>
             </div>

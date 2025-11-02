@@ -1,0 +1,32 @@
+/users/{userId}
+    user_name: string
+    email: string
+    profilePic: string
+    lastActive: Timestamp
+    created_at: Timestamp
+    isOnline: boolean
+    uid: string
+
+/users/{userId}/chats/{chatId}
+    chatRef: reference (/chats/{chatId})
+    unReadCount: number
+
+/chats/{chatId}
+    chatName: string
+    chatImage: string
+    isGroup: boolean
+    users: [reference (/users/{userId}), reference (/users/{userId}), ...]
+    createdAt: Timestamp
+    lastMessage:
+        text: string
+        messageType: 'text' | 'image'
+        sender: reference (/users/{userId})
+        createdAt: Timestamp
+
+/chats/{chatId}/messages/{messageId}
+    text: string
+    sender: reference (/users/{userId})
+    createdAt: Timestamp
+    readBy: [reference (/users/{userId}), reference (/users/{userId})]
+    messageType: 'text' | 'image'
+    mediaFiles?: string[]

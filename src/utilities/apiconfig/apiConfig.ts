@@ -15,6 +15,8 @@ export const endpoints = {
 };
 export const firebaseCollections = {
   USERS: "users",
+  CHATS: "chats",
+  MESSAGES: "messages"
 }
 
 export const makeApiRequest = async <T>(

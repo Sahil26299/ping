@@ -1,9 +1,14 @@
 import React from "react";
 import { AuthForm } from "../shared/AuthForm";
-import { firebaseAuthService, firebaseCollections, getFormConfig } from "@/src/utilities";
+import {
+  firebaseAuthService,
+  firebaseCollections,
+  firestoreSetOperation,
+  getFormConfig,
+} from "@/src/utilities";
 import { UserCredential } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -31,13 +36,17 @@ function SignupScreen() {
       });
 
       // 3️⃣ Store extra user info in Firestore
-      await setDoc(doc(db, firebaseCollections.USERS, user.uid), {
-        uid: user.uid,
-        user_name: values?.username,
-        profilePic: "",
-        email: values?.email,
-        created_at: new Date(),
-      });
+      firestoreSetOperation(
+        firebaseCollections.USERS,
+        {
+          uid: user.uid,
+          user_name: values?.username,
+          profilePic: "",
+          email: values?.email,
+          created_at: serverTimestamp(),
+        },
+        [user.uid]
+      );
 
       toast.success("User registered successfully!", {
         description:
