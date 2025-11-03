@@ -188,8 +188,6 @@ export function AppSidebar({
           ) !== undefined
       );
 
-      console.log(isAlreadyAdded, chatList, "isAlreadyAdded");
-
       if (!chatList || chatList?.length === 0 || !isAlreadyAdded) {
         // this is a new user to start chat with
         const chatRef = collection(db, firebaseCollections.CHATS);

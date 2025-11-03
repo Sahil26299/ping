@@ -57,7 +57,10 @@ import {
   firestoreGetCollectionOperation,
   firestoreReferDocOperation,
   convertFirestoreTimestamp,
-  listenToChats
+  listenToChats,
+  resolveUserReference,
+  resolveChatUsers,
+  resolveLastMessageSender,
 } from "./commonFunctions/firestoreOperations";
 export {
   poppins,
@@ -85,7 +88,10 @@ export {
   firestoreGetCollectionOperation,
   firestoreReferDocOperation,
   convertFirestoreTimestamp,
-  listenToChats
+  listenToChats,
+  resolveUserReference,
+  resolveChatUsers,
+  resolveLastMessageSender,
 };
 export type {
   FieldConfig,

@@ -12,6 +12,8 @@ import {
   getSessionStorageItem,
   keys,
   listenToChats,
+  resolveChatUsers,
+  resolveLastMessageSender,
   setSessionStorageItem,
   userType,
 } from "@/src/utilities";
@@ -44,11 +46,35 @@ function page() {
     if (!userDetails) return;
 
     // Start listening to Firestore changes
-    const unsubscribe = listenToChats(userDetails?.uid, (newMessages: GenericObjectInterface[]) => {
-      console.log(newMessages,'newMessages');
-      toast("Message recieved")
-      // setMessages(newMessages);
-    });
+    const unsubscribe = listenToChats(
+      userDetails?.uid,
+      async (newMessages: GenericObjectInterface[]) => {
+        let chatsArray: any = await Promise.all(
+          newMessages?.map(async (chat) => {
+            const chatExtracted = await getDoc(chat?.chatRef);
+            const chatObject = chatExtracted.data() as GenericObjectInterface;
+            // Resolve chat users and last message sender in parallel
+            const [resolvedUsers, resolvedSender] = await Promise.all([
+              resolveChatUsers(chatObject.users || []),
+              resolveLastMessageSender(chatObject.lastMessage),
+            ]);
+
+            return {
+              ...chatObject,
+              unReadCount: chat?.unReadCount,
+              users: resolvedUsers,
+              lastMessage: chatObject.lastMessage
+                ? {
+                    ...chatObject.lastMessage,
+                    sender: resolvedSender,
+                  }
+                : undefined,
+            };
+          })
+        );
+        setUserChatList(chatsArray);
+      }
+    );
 
     // Stop listening when component unmounts or chatId changes
     return () => unsubscribe();
@@ -70,56 +96,6 @@ function page() {
         return usersArray.filter(
           (user: GenericObjectInterface) => user?.uid !== currentUserId
         );
-      };
-
-      /**
-       * Resolve a single user reference from Firestore
-       */
-      const resolveUserReference = async (
-        userRef: any
-      ): Promise<GenericObjectInterface | null> => {
-        try {
-          if (!userRef?.path) return null;
-          const userDocRef = firestoreReferDocOperation(userRef.path);
-          const userDoc = await getDoc(userDocRef);
-          return userDoc?.exists()
-            ? (userDoc.data() as GenericObjectInterface)
-            : null;
-        } catch (error) {
-          console.error("Error resolving user reference:", error);
-          return null;
-        }
-      };
-
-      /**
-       * Resolve all user references in a chat
-       */
-      const resolveChatUsers = async (
-        userRefs: any[]
-      ): Promise<GenericObjectInterface[]> => {
-        const resolvedUsers = await Promise.all(
-          userRefs.map(resolveUserReference)
-        );
-        return resolvedUsers.filter(Boolean) as GenericObjectInterface[];
-      };
-
-      /**
-       * Resolve last message sender reference
-       */
-      const resolveLastMessageSender = async (
-        lastMessage: GenericObjectInterface | undefined
-      ): Promise<GenericObjectInterface | null> => {
-        try {
-          if (!lastMessage?.sender?.path) return null;
-          const senderRef = firestoreReferDocOperation(lastMessage.sender.path);
-          const senderDoc = await getDoc(senderRef);
-          return senderDoc.exists()
-            ? (senderDoc.data() as GenericObjectInterface)
-            : null;
-        } catch (error) {
-          console.error("Error resolving last message sender:", error);
-          return null;
-        }
       };
 
       /**
@@ -214,7 +190,6 @@ function page() {
         return;
       }
 
-      console.log(usersArray, "usersArray");
 
       // Find current user
       const currentUser = usersArray.find(
@@ -233,7 +208,6 @@ function page() {
       ]);
 
       setUsersList(filteredUsersList);
-      console.log(userChats, "userChats");
       setUserChatList(userChats);
 
       // Update user details

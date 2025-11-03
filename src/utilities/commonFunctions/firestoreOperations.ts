@@ -56,15 +56,17 @@ export const firestoreSetOperation = async (
  * @param args - (Odd, 1, 3, 5 etc) path parameters to be passed to the firestore database,
  * @returns - returns true if the operation is successful,
  */
-export const firestoreGetCollectionOperation = async (key: string, ...args: any[]) => {
+export const firestoreGetCollectionOperation = async (
+  key: string,
+  ...args: any[]
+) => {
   try {
     const collectionRef = collection(db, key, ...args);
     const q = query(collectionRef);
     const docs = await getDocs(q);
-    const result:GenericObjectInterface[] = docs.docs.map((doc) => doc.data());
+    const result: GenericObjectInterface[] = docs.docs.map((doc) => doc.data());
     return result;
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 /**
@@ -78,12 +80,15 @@ export const firestoreReferDocOperation = (key: string, ...args: any[]) => {
 };
 
 export const listenToChats = (userId: string, callback: Function) => {
-  const chatsRef = collection(db, `${firebaseCollections.USERS}/${userId}/${firebaseCollections.CHATS}`);
-  const q = query(chatsRef, orderBy("createdAt", "asc"));
+  const chatsRef = collection(
+    db,
+    `${firebaseCollections.USERS}/${userId}/${firebaseCollections.CHATS}`
+  );
+  const q = query(chatsRef);
 
   return onSnapshot(q, (snapshot) => {
-    console.log(snapshot.docs,'snapshot.docs');
-    
+    console.log(snapshot.docs, "snapshot.docs");
+
     const chats = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -106,3 +111,51 @@ export function convertFirestoreTimestamp(timestamp: any): Date | string {
     );
   return new Date(timestamp); // fallback
 }
+
+/**
+ * Resolve a single user reference from Firestore
+ */
+export const resolveUserReference = async (
+  userRef: any
+): Promise<GenericObjectInterface | null> => {
+  try {
+    if (!userRef?.path) return null;
+    const userDocRef = firestoreReferDocOperation(userRef.path);
+    const userDoc = await getDoc(userDocRef);
+    return userDoc?.exists()
+      ? (userDoc.data() as GenericObjectInterface)
+      : null;
+  } catch (error) {
+    console.error("Error resolving user reference:", error);
+    return null;
+  }
+};
+
+/**
+ * Resolve all user references in a chat
+ */
+export const resolveChatUsers = async (
+  userRefs: any[]
+): Promise<GenericObjectInterface[]> => {
+  const resolvedUsers = await Promise.all(userRefs.map(resolveUserReference));
+  return resolvedUsers.filter(Boolean) as GenericObjectInterface[];
+};
+
+/**
+ * Resolve last message sender reference
+ */
+export const resolveLastMessageSender = async (
+  lastMessage: GenericObjectInterface | undefined
+): Promise<GenericObjectInterface | null> => {
+  try {
+    if (!lastMessage?.sender?.path) return null;
+    const senderRef = firestoreReferDocOperation(lastMessage.sender.path);
+    const senderDoc = await getDoc(senderRef);
+    return senderDoc.exists()
+      ? (senderDoc.data() as GenericObjectInterface)
+      : null;
+  } catch (error) {
+    console.error("Error resolving last message sender:", error);
+    return null;
+  }
+};
