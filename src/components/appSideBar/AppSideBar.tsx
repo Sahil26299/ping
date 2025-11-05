@@ -26,9 +26,7 @@ import CustomSearchInput from "../animatedSeachInput/CustomSearchInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   firebaseCollections,
-  firestoreGetCollectionOperation,
-  firestoreReferDocOperation,
-  firestoreSetOperation,
+  firestoreSendMessage,
   firestoreUpdateOperation,
   GenericObjectInterface,
   inputChangeEventType,
@@ -87,6 +85,7 @@ export function AppSidebar({
     null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+console.log(chatList,'chatList');
 
   useEffect(() => {
     setImageSrcFinal(userDetails.profilePic || "");
@@ -189,46 +188,7 @@ export function AppSidebar({
       );
 
       if (!chatList || chatList?.length === 0 || !isAlreadyAdded) {
-        // this is a new user to start chat with
-        const chatRef = collection(db, firebaseCollections.CHATS);
-        const userDocRef = firestoreReferDocOperation(
-          firebaseCollections.USERS,
-          userDetails.uid
-        );
-        const recipientDocRef = firestoreReferDocOperation(
-          firebaseCollections.USERS,
-          pingUserSelected?.uid
-        );
-        // save this new chat
-        const newChatRef = await addDoc(chatRef, {
-          chatName: null,
-          chatImage: null,
-          isGroup: false,
-          users: [userDocRef, recipientDocRef],
-          createdAt: serverTimestamp(),
-          lastMessage: {
-            text: "Hi!",
-            sender: userDocRef,
-            createdAt: serverTimestamp(),
-          },
-        });
-        // now save this new chats per both the users
-        let perUserChats = {
-          chatRef: newChatRef,
-          unReadCount: 0,
-        };
-        await Promise.all([
-          firestoreSetOperation(
-            `${firebaseCollections.USERS}/${userDetails?.uid}/${firebaseCollections.CHATS}/${newChatRef?.id}`,
-            perUserChats,
-            []
-          ),
-          firestoreSetOperation(
-            `${firebaseCollections.USERS}/${pingUserSelected?.uid}/${firebaseCollections.CHATS}/${newChatRef?.id}`,
-            { ...perUserChats, unReadCount: 1 },
-            []
-          ),
-        ]);
+        firestoreSendMessage(userDetails as userType, pingUserSelected as userType, "Hi!")
         if (pingUserSelected) {
           handleClick(pingUserSelected);
         }

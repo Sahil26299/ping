@@ -1,5 +1,6 @@
 import { db } from "@/lib/firebase";
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -7,10 +8,14 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { GenericObjectInterface } from "../commonInterface/commonInterfaces";
+import {
+  GenericObjectInterface,
+  userType,
+} from "../commonInterface/commonInterfaces";
 import { firebaseCollections } from "../apiconfig/apiConfig";
 
 /**
@@ -87,8 +92,6 @@ export const listenToChats = (userId: string, callback: Function) => {
   const q = query(chatsRef);
 
   return onSnapshot(q, (snapshot) => {
-    console.log(snapshot.docs, "snapshot.docs");
-
     const chats = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -157,5 +160,82 @@ export const resolveLastMessageSender = async (
   } catch (error) {
     console.error("Error resolving last message sender:", error);
     return null;
+  }
+};
+
+export const firestoreSendMessage = async (
+  senderDetails: userType,
+  recipientDetails: userType,
+  message: string,
+  prevUnreadCount: number = 0
+) => {
+  try {
+    // chat between A and B always has ID A_B
+    const chatId = [senderDetails.uid, recipientDetails.uid].sort().join("_");
+
+    const chatDoc = doc(db, firebaseCollections.CHATS, chatId);
+
+    const senderDocRef = firestoreReferDocOperation(
+      firebaseCollections.USERS,
+      senderDetails.uid
+    );
+    const recipientDocRef = firestoreReferDocOperation(
+      firebaseCollections.USERS,
+      recipientDetails?.uid
+    );
+    // save this new chat
+    await setDoc(
+      chatDoc,
+      {
+        chatName: null,
+        chatImage: null,
+        isGroup: false,
+        users: [senderDocRef, recipientDocRef],
+        createdAt: serverTimestamp(),
+        lastMessage: {
+          text: message,
+          sender: senderDocRef,
+          createdAt: serverTimestamp(),
+        },
+      },
+      { merge: true }
+    ); // ✅ merge true keeps old fields intact
+
+    // add new collection messages and a new message in that collection
+    const chatDocRef = collection(chatDoc, firebaseCollections.MESSAGES);
+
+    await addDoc(chatDocRef, {
+      text: message,
+      sender: senderDocRef,
+      createdAt: serverTimestamp(),
+      readBy: [senderDocRef],
+      messageType: "text",
+      mediaFiles: [],
+    });
+
+    // now save this new chats per both the users
+    let perUserChats = {
+      chatRef: chatDoc,
+      unReadCount: prevUnreadCount + 1,
+    };
+
+    const userChatCollection = collection(
+      senderDocRef,
+      `${firebaseCollections.CHATS}`
+    );
+    const recipientChatCollection = collection(
+      recipientDocRef,
+      `${firebaseCollections.CHATS}`
+    );
+
+    await Promise.all([
+      await addDoc(userChatCollection, {
+        ...perUserChats,
+        unReadCount: 0,
+      }),
+      await addDoc(recipientChatCollection, perUserChats),
+    ]);
+  } catch (error) {
+    console.log(error, "[[[");
   }
 };

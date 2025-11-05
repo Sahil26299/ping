@@ -61,6 +61,7 @@ import {
   resolveUserReference,
   resolveChatUsers,
   resolveLastMessageSender,
+  firestoreSendMessage,
 } from "./commonFunctions/firestoreOperations";
 export {
   poppins,
@@ -92,6 +93,7 @@ export {
   resolveUserReference,
   resolveChatUsers,
   resolveLastMessageSender,
+  firestoreSendMessage,
 };
 export type {
   FieldConfig,

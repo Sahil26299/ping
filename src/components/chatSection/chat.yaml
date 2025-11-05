@@ -29,4 +29,4 @@
     createdAt: Timestamp
     readBy: [reference (/users/{userId}), reference (/users/{userId})]
     messageType: 'text' | 'image'
-    mediaFiles?: string[]
+    mediaFiles: string[]

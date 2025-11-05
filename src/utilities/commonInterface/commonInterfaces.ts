@@ -43,15 +43,17 @@ export interface inputMessageType {
 }
 
 export interface chatMessage {
-  id: number;
-  message: string;
-  is_self: boolean;
-  sender: number;
-  recipient: number;
-  created_at: Date;
+  text: string;
+  sender: userType;
+  createdAt: Date;
+  readBy: userType[];
+  messageType: "text" | "image";
+  mediaFiles: string[];
 }
 export interface ChatMessagesProps {
   messages: chatMessage[];
+  recipientDetails: userType
+  userDetails: userType
 }
 
 /**
