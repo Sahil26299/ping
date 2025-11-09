@@ -31,8 +31,8 @@ export const firestoreUpdateOperation = async (
   [...args]: any[]
 ) => {
   try {
-    const userDocRef = doc(db, key, ...args);
-    await updateDoc(userDocRef, data);
+    const userDocRef = doc(db, key, ...args);    
+    await updateDoc(userDocRef, data);    
     return true;
   } catch (error) {}
 };
@@ -97,6 +97,22 @@ export const listenToChats = (userId: string, callback: Function) => {
       ...doc.data(),
     }));
     callback(chats);
+  });
+};
+
+export const listenToUsers = (callback: Function) => {
+  const usersRef = collection(
+    db,
+    `${firebaseCollections.USERS}`
+  );
+  const q = query(usersRef);
+
+  return onSnapshot(q, (snapshot) => {
+    const users = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    callback(users);
   });
 };
 
@@ -167,7 +183,8 @@ export const firestoreSendMessage = async (
   senderDetails: userType,
   recipientDetails: userType,
   message: string,
-  prevUnreadCount: number = 0
+  prevUnreadCount: number = 0,
+  messageId?: number
 ) => {
   try {
     // chat between A and B always has ID A_B
@@ -205,6 +222,7 @@ export const firestoreSendMessage = async (
     const chatDocRef = collection(chatDoc, firebaseCollections.MESSAGES);
 
     await addDoc(chatDocRef, {
+      messageId: messageId || 0,
       text: message,
       sender: senderDocRef,
       createdAt: serverTimestamp(),
@@ -219,21 +237,21 @@ export const firestoreSendMessage = async (
       unReadCount: prevUnreadCount + 1,
     };
 
-    const userChatCollection = collection(
+    const userChatCollection = doc(
       senderDocRef,
-      `${firebaseCollections.CHATS}`
+      `${firebaseCollections.CHATS}/${chatId}`
     );
-    const recipientChatCollection = collection(
+    const recipientChatCollection = doc(
       recipientDocRef,
-      `${firebaseCollections.CHATS}`
+      `${firebaseCollections.CHATS}/${chatId}`
     );
 
     await Promise.all([
-      await addDoc(userChatCollection, {
+      await setDoc(userChatCollection, {
         ...perUserChats,
         unReadCount: 0,
       }),
-      await addDoc(recipientChatCollection, perUserChats),
+      await setDoc(recipientChatCollection, perUserChats),
     ]);
   } catch (error) {
     console.log(error, "[[[");

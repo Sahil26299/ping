@@ -43,6 +43,7 @@ export interface inputMessageType {
 }
 
 export interface chatMessage {
+  messageId: number;
   text: string;
   sender: userType;
   createdAt: Date;

@@ -30,7 +30,9 @@ function LoginScreen() {
 
   const handleSubmit = async (values: Record<string, string>) => {
     // Simulate API call
+    console.log(values,'values while login');
     try {
+      
       const userCredentials: UserCredential = (await firebaseAuthService(
         "login",
         values

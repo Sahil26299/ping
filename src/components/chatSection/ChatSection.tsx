@@ -2,55 +2,33 @@ import React, { useEffect, useState } from "react";
 import MessageInputWithSubmit from "./components/MessageInputWithSubmit";
 import {
   chatMessage,
-  firebaseCollections,
-  firestoreGetCollectionOperation,
   GenericObjectInterface,
   getSessionStorageItem,
   keys,
-  resolveChatUsers,
-  resolveUserReference,
   userType,
 } from "@/src/utilities";
 import ChatMessages from "./components/ChatMessages";
 
 function ChatSection({
+  messagesArray,
   recipientDetails,
+  handleSendMessage
 }: {
+  messagesArray: chatMessage[];
   recipientDetails: userType | GenericObjectInterface;
+  handleSendMessage: (param:string) => void
 }) {
-  const [messagesArray, setMessagesArray] = useState<chatMessage[]>([]);
   const [userDetails, setUserDetails] = useState<userType | null>(null);
+
 
   useEffect(() => {
     if (recipientDetails && recipientDetails?.uid) {
       const userInfo = getSessionStorageItem(keys.USER_DETAILS);
+      // handleReadMessages(userInfo);
       setUserDetails(userInfo);
-      handleFetchMessages(userInfo);
+      // handleFetchMessages(userInfo);
     }
   }, [recipientDetails]);
-
-  const handleFetchMessages = async (userInfo: userType) => {
-    try {
-      const chatId = [userInfo?.uid, recipientDetails.uid].sort().join("_");
-      const messagesCollection = await firestoreGetCollectionOperation(
-        firebaseCollections.CHATS,
-        chatId,
-        firebaseCollections.MESSAGES
-      );
-      const result: chatMessage[] = (await Promise.all(
-        messagesCollection?.map(async (message) => {
-          const resolvedReadByUsers = await resolveChatUsers(message?.readBy);
-          const resolvedSender = await resolveUserReference(message?.sender);
-          return {
-            ...message,
-            readBy: resolvedReadByUsers,
-            sender: resolvedSender,
-          };
-        }) ?? []
-      )) as chatMessage[];
-      setMessagesArray(result);
-    } catch (error) {}
-  };
 
   if (!recipientDetails || !recipientDetails.user_name) {
     return (
@@ -64,10 +42,14 @@ function ChatSection({
   return (
     <div className="h-[calc(100vh-60px)] w-full flex flex-col">
       <section className="flex flex-col flex-1 py-4 px-16 overflow-y-auto">
-        <ChatMessages messages={messagesArray} recipientDetails={recipientDetails as userType} userDetails={userDetails as userType} />
+        <ChatMessages
+          messages={messagesArray}
+          recipientDetails={recipientDetails as userType}
+          userDetails={userDetails as userType}
+        />
       </section>
       <section className="h-[50px] border-t border-border/40">
-        <MessageInputWithSubmit />
+        <MessageInputWithSubmit handleSubmitChat={handleSendMessage} />
       </section>
     </div>
   );

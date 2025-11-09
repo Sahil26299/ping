@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import CustomSearchInput from "../animatedSeachInput/CustomSearchInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  emptySessionStorage,
   firebaseCollections,
   firestoreSendMessage,
   firestoreUpdateOperation,
@@ -72,7 +73,7 @@ export function AppSidebar({
 }: {
   recipientDetails: userType | GenericObjectInterface;
   userDetails: userType | GenericObjectInterface;
-  usersList: GenericObjectInterface;
+  usersList: userType[];
   listLoading: boolean;
   chatList: GenericObjectInterface[];
 }) {
@@ -85,7 +86,6 @@ export function AppSidebar({
     null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-console.log(chatList,'chatList');
 
   useEffect(() => {
     setImageSrcFinal(userDetails.profilePic || "");
@@ -108,10 +108,10 @@ console.log(chatList,'chatList');
     }
 
     return result;
-  }, [searchedText]);
+  }, [searchedText, usersList]);
 
-  const handleClick = (user: userType) => {
-    setSessionStorageItem(keys.RECIPIENT_SELECTED, user);
+  const handleSelectUser = (selectedUser: userType) => {
+    setSessionStorageItem(keys.RECIPIENT_SELECTED, selectedUser);
   };
 
   const handleLogout = async () => {
@@ -128,6 +128,9 @@ console.log(chatList,'chatList');
       // this event is triggered in the firebase auth model and immediately triggers an event which can be catched using onAuthStateChanged() in realtime.
       await signOut(auth);
     } catch (error) {}
+    finally {
+      emptySessionStorage()
+    }
   };
 
   const handleProfilePicChange = () => {
@@ -190,14 +193,15 @@ console.log(chatList,'chatList');
       if (!chatList || chatList?.length === 0 || !isAlreadyAdded) {
         firestoreSendMessage(userDetails as userType, pingUserSelected as userType, "Hi!")
         if (pingUserSelected) {
-          handleClick(pingUserSelected);
+          handleSelectUser(pingUserSelected);
         }
       }
     } catch (error) {}
   };
 
   const extractRecipientFromChatUsers = (usersArray: userType[]) => {
-    return usersArray?.find((el) => el?.uid !== userDetails?.uid);
+    // usersList    
+    return usersArray?.find((el) => (el?.uid === recipientDetails?.uid || el?.uid !== userDetails?.uid));
   };
 
   /**
@@ -305,11 +309,13 @@ console.log(chatList,'chatList');
                       const chatRecipient = extractRecipientFromChatUsers(
                         chat?.users
                       );
+                      console.log(chatRecipient,'chatRecipient');
+                      
                       if (chatRecipient) {
                         return (
                           <SidebarMenuItem key={chatRecipient?.uid}>
                             <SidebarMenuButton
-                              onClick={() => handleClick(chatRecipient)}
+                              onClick={() => handleSelectUser(chatRecipient)}
                               asChild
                               className={`h-[45px] p-2 cursor-pointer flex items-center justify-between hover:bg-background active:bg-background ${
                                 recipientDetails?.uid === chatRecipient?.uid
@@ -339,14 +345,13 @@ console.log(chatList,'chatList');
                                     >
                                       {chatRecipient?.user_name}
                                       {chat?.unReadCount !== 0 && (
-                                        <sup className="h-4 w-4 text-[11px] font-medium rounded-full bg-green-600 flex flex-col items-center justify-center">
+                                        <sup className="h-4 w-4 text-[11px] ml-1 font-medium rounded-full bg-green-600 flex flex-col items-center justify-center">
                                           {chat?.unReadCount}
                                         </sup>
                                       )}
                                     </span>
-                                    <span className="text-[12px] font-medium text-slate-400 leading-3.5">
-                                      {chat?.lastMessage?.text}
-                                    </span>
+                                    <div dangerouslySetInnerHTML={{"__html": chat?.lastMessage?.text}} className="text-[12px] font-medium text-slate-400 leading-3.5 line-clamp-1">
+                                    </div>
                                   </section>
                                 </section>
                                 {chatRecipient?.isOnline && (
@@ -395,7 +400,7 @@ console.log(chatList,'chatList');
                     {usersListMemoized?.map((user: userType) => (
                       <SidebarMenuItem key={user.uid}>
                         <SidebarMenuButton
-                          // onClick={() => handleClick(user)}
+                          // onClick={() => handleSelectUser(user)}
                           asChild
                           className={`h-[45px] group/aGroup p-2 cursor-pointer flex items-center justify-between hover:bg-transparent active:bg-transparent`}
                         >
@@ -482,9 +487,9 @@ console.log(chatList,'chatList');
                           searchResults[
                             resultType as keyof typeof searchResults
                           ].map((user: userType) => (
-                            <SidebarMenuItem key={user.user_name}>
+                            <SidebarMenuItem key={`${user.user_name}_${user?.isOnline}`}>
                               <SidebarMenuButton
-                                onClick={() => handleClick(user)}
+                                onClick={() => handleSelectUser(user)}
                                 asChild
                                 className={`cursor-pointer hover:bg-background active:bg-background ${
                                   recipientDetails?.uid === user?.uid

@@ -5,9 +5,11 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send } from "lucide-react";
-import { inputMessageType } from "@/src/utilities";
+import { formSubmitEventType, inputMessageType } from "@/src/utilities";
 
-function MessageInputWithSubmit() {
+function MessageInputWithSubmit({handleSubmitChat}: {
+  handleSubmitChat: (param: string) => void;
+}) {
   const [mounted, setMounted] = useState(false);
   const [inputMessage, setInputMessage] = useState<inputMessageType>({
     text: "",
@@ -40,6 +42,19 @@ function MessageInputWithSubmit() {
           "prose prose-sm focus:outline-none h-[45px] w-full px-2 rounded text-sm dark:text-white text-black",
         "data-placeholder": "Your message here...",
       },
+      handleKeyDown: (view, event) => {
+        // Submit form on Enter (but allow Shift+Enter for new line)
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          const form = view.dom.closest("form");
+          if (form) {
+            const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+            form.dispatchEvent(submitEvent);
+          }
+          return true;
+        }
+        return false;
+      },
     },
   });
 
@@ -54,9 +69,16 @@ function MessageInputWithSubmit() {
       </form>
     );
   }
+console.log(inputMessage.textHTML,'inputMessage.textHTML');
 
   return (
-    <form className={`flex items-center gap-2 justify-between h-full`}>
+    <form
+      onSubmit={(ev:formSubmitEventType) => {
+        ev.preventDefault();        
+        handleSubmitChat(inputMessage.textHTML);
+      }}
+      className={`flex items-center gap-2 justify-between h-full`}
+    >
       <div className="w-full h-full flex items-center px-2">
         <section className="flex items-center h-full">
           <Button type="button" size={"icon"} variant={"outline"}>

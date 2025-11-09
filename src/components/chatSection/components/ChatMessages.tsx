@@ -12,7 +12,6 @@ function ChatMessages({
     <div className="flex flex-col w-full h-full gap-3">
       {messages?.length > 0 &&
         messages?.map((message: chatMessage) => {
-          console.log(message,'convertFirestoreTimestamp(message?.createdAt)?.toString()');
           return (
             <section
               key={convertFirestoreTimestamp(message?.createdAt)?.toString()}
@@ -29,7 +28,7 @@ function ChatMessages({
                   className="object-cover"
                 />
               </Avatar>
-              <span className="text-sm">{message.text}</span>
+              <div className="text-sm" dangerouslySetInnerHTML={{"__html": message.text}} ></div>
             </section>
           );
         })}

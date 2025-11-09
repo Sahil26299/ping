@@ -19,6 +19,7 @@ import {
   getSessionStorageItem,
   setSessionStorageItem,
   removeSessionStorageItem,
+  emptySessionStorage,
 } from "./storage/sessionStorageUtils";
 
 import {
@@ -62,6 +63,7 @@ import {
   resolveChatUsers,
   resolveLastMessageSender,
   firestoreSendMessage,
+  listenToUsers,
 } from "./commonFunctions/firestoreOperations";
 export {
   poppins,
@@ -69,6 +71,7 @@ export {
   getSessionStorageItem,
   setSessionStorageItem,
   removeSessionStorageItem,
+  emptySessionStorage,
   getAuthConfig,
   getBrandingConfig,
   getFormConfig,
@@ -94,6 +97,7 @@ export {
   resolveChatUsers,
   resolveLastMessageSender,
   firestoreSendMessage,
+  listenToUsers,
 };
 export type {
   FieldConfig,

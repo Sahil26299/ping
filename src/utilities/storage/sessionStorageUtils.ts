@@ -39,3 +39,11 @@ export const removeSessionStorageItem = (key: string) => {
     console.error(`Error removing item from sessionStorage: ${error}`);
   }
 };
+
+export const emptySessionStorage = () => {
+  try {
+    sessionStorage.clear()
+  } catch (error) {
+    
+  }
+}
