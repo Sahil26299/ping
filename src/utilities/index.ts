@@ -31,9 +31,6 @@ import {
   FieldConfig,
   AuthConfig,
   FormConfig,
-  firebaseAuthService,
-  firebaseAuthType,
-  metaType,
 } from "./commonFunctions/authConfig";
 import {
   hasFormErrors,
@@ -50,8 +47,27 @@ import {
   endpoints,
   headersList,
   makeApiRequest,
-  firebaseCollections,
+  socketEvents,
+  // firebaseCollections, // Removed if not present in apiConfig anymore, but it was there in my last read. Let's check apiConfig again. It was NOT in my last write to apiConfig.
 } from "./apiconfig/apiConfig";
+
+import { registerUser, loginUser, logoutUser } from "./apiconfig/authHandler";
+
+import {
+  fetchUserChats,
+  fetchChatMessages,
+  postChatMessages,
+  createUserChats
+} from "./apiconfig/chatHandler";
+
+import {
+  fetchUserList,
+  fetchUserProfile,
+  searchUsers,
+  updateUserProfile,
+} from "./apiconfig/userHandler";
+
+// Deprecated firestore operations exported as no-ops for safety.
 import {
   firestoreUpdateOperation,
   firestoreSetOperation,
@@ -65,6 +81,7 @@ import {
   firestoreSendMessage,
   listenToUsers,
 } from "./commonFunctions/firestoreOperations";
+
 export {
   poppins,
   keys,
@@ -81,12 +98,23 @@ export {
   validateField,
   validateForm,
   getLandingConfig,
-  firebaseAuthService,
   BASE_URL,
   endpoints,
   headersList,
   makeApiRequest,
-  firebaseCollections,
+  registerUser,
+  loginUser,
+  fetchUserProfile,
+  updateUserProfile,
+  searchUsers,
+  logoutUser,
+  fetchUserList,
+  fetchUserChats,
+  fetchChatMessages,
+  postChatMessages,
+  createUserChats,
+  socketEvents,
+  // firebaseCollections, // Removing as I likely removed it from apiConfig in step 195
   firestoreUpdateOperation,
   firestoreSetOperation,
   firestoreGetCollectionOperation,
@@ -117,7 +145,5 @@ export type {
   CustomResponse,
   LottieFileType,
   lottieAnimProviderProptypes,
-  firebaseAuthType,
-  metaType,
   SimpleDialogProps,
 };

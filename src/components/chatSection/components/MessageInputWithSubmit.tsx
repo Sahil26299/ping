@@ -5,10 +5,14 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send } from "lucide-react";
-import { formSubmitEventType, inputMessageType } from "@/src/utilities";
+import { formSubmitEventType, inputMessageType, keys } from "@/src/utilities";
 
-function MessageInputWithSubmit({handleSubmitChat}: {
-  handleSubmitChat: (param: string) => void;
+function MessageInputWithSubmit({
+  handleSubmitMessage,
+  handleDeselectUser,
+}: {
+  handleSubmitMessage: (param: string) => void;
+  handleDeselectUser: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
   const [inputMessage, setInputMessage] = useState<inputMessageType>({
@@ -43,14 +47,25 @@ function MessageInputWithSubmit({handleSubmitChat}: {
         "data-placeholder": "Your message here...",
       },
       handleKeyDown: (view, event) => {
+        console.log(event.key === "Escape", "event.key");
+
         // Submit form on Enter (but allow Shift+Enter for new line)
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           const form = view.dom.closest("form");
           if (form) {
-            const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+            const submitEvent = new Event("submit", {
+              bubbles: true,
+              cancelable: true,
+            });
             form.dispatchEvent(submitEvent);
           }
+          return true;
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          editor?.commands.clearContent();
+          setInputMessage({ text: "", textHTML: "" });
+          handleDeselectUser();
           return true;
         }
         return false;
@@ -69,13 +84,15 @@ function MessageInputWithSubmit({handleSubmitChat}: {
       </form>
     );
   }
-console.log(inputMessage.textHTML,'inputMessage.textHTML');
 
   return (
     <form
-      onSubmit={(ev:formSubmitEventType) => {
-        ev.preventDefault();        
-        handleSubmitChat(inputMessage.textHTML);
+      onSubmit={(ev: formSubmitEventType) => {
+        ev.preventDefault();
+        handleSubmitMessage(inputMessage.textHTML);
+        // Clear the editor using TipTap's commands API
+        editor?.commands.clearContent();
+        setInputMessage({ text: "", textHTML: "" });
       }}
       className={`flex items-center gap-2 justify-between h-full`}
     >

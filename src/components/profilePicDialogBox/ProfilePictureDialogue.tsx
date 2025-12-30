@@ -1,6 +1,6 @@
 import { SimpleDialogProps } from "@/src/utilities";
 import { canvasPreview } from "./canvasPreview";
-import { useState, useRef, useEffect,  } from "react";
+import { useState, useRef, useEffect } from "react";
 import ReactCrop, { type Crop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import Image from "next/image";
 import { Upload } from "lucide-react";
 
 function ProfilePictureDialogue(props: SimpleDialogProps) {
@@ -149,10 +148,15 @@ function ProfilePictureDialogue(props: SimpleDialogProps) {
                     ? `${(croppedImageSize / 1000000)?.toFixed(2)} Mb`
                     : `${(croppedImageSize / 1000)?.toFixed(2)} Kb`}
                 </span>
-                <span className={`text-[12px] ${croppedImageSize > 1000000 ? "text-red-700" : "text-green-700"}`}>
+                <span
+                  className={`text-[12px] ${
+                    croppedImageSize > 1000000
+                      ? "text-red-700"
+                      : "text-green-700"
+                  }`}
+                >
                   <strong>Limit:</strong>
-                  <br />{" "}
-                  1.00 Mb
+                  <br /> 1.00 Mb
                 </span>
               </section>
             </div>
@@ -165,20 +169,20 @@ function ProfilePictureDialogue(props: SimpleDialogProps) {
                 Cancel
               </DialogClose>
               <Button
-              disabled={croppedImageSize > 1048487}
+                disabled={croppedImageSize > 1048487}
                 className="bg-green-100 text-green-700 hover:bg-green-100 hover:text-green-700 text-sm font-medium "
                 onClick={() => handleSubmit("upload")}
               >
                 Upload
               </Button>
-              <Button
+              {/* <Button
                 variant={"outline"}
                 className="text-sm font-medium "
                 onClick={() => handleSubmit("upload")}
               >
                 <Upload />
                 Choose Again
-              </Button>
+              </Button> */}
             </div>
           </div>
         </DialogFooter>

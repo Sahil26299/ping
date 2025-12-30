@@ -27,12 +27,11 @@ export interface GenericObjectInterface {
 export type ArrayOfStringType = string[];
 
 export interface userType {
+  _id?:string;
   uid: number;
-  created_at: Date;
-  user_name: string;
+  username: string;
   email: string;
-  profilePic: string;
-  apiKey?: string;
+  profilePicture: string;
   isOnline?: boolean;
   lastActive?: Date;
 }

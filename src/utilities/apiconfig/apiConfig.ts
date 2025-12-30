@@ -1,9 +1,9 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { ApiResponse, GenericObjectInterface } from "@/src/utilities";
 
-import {ApiResponse, GenericObjectInterface, CustomResponse} from "@/src/utilities"
-
-
-export let BASE_URL = ""; //Local
+// In Next.js App Router, using relative paths /api proxies to the backend automatically
+// or we can use the full URL if needed.
+export let BASE_URL = "/api";
 
 export const headersList = {
   Accept: "*/*",
@@ -11,62 +11,53 @@ export const headersList = {
 };
 
 export const endpoints = {
- 
+  // Auth
+  AUTH_SIGNUP: `${BASE_URL}/auth/signup`,
+  AUTH_LOGIN: `${BASE_URL}/auth/login`,
+  AUTH_ME: `${BASE_URL}/auth/me`,
+  AUTH_LOGOUT: `${BASE_URL}/auth/logout`,
+
+  // Core Features
+  CHATS: `${BASE_URL}/chats`,
+  MESSAGES: `${BASE_URL}/messages`,
+  USERS: `${BASE_URL}/users`, // For search
 };
-export const firebaseCollections = {
-  USERS: "users",
-  CHATS: "chats",
-  MESSAGES: "messages"
-}
+
+export const socketEvents = {
+  JOIN_USER_ROOM: "join-user-room",
+  JOIN_CHAT_ROOM: "join-chat-room",
+  SEND_MESSAGE: "send-message",
+  RECEIVE_CHAT_MESSAGE: "chat-message",
+  USER_MESSAGE: "user-message",
+  DISCONNECT: "disconnect",
+};
 
 export const makeApiRequest = async <T>(
   method: AxiosRequestConfig["method"],
   url: string,
   data: any = null,
-  customHeaders: GenericObjectInterface,
-  token?: string
+  customHeaders: GenericObjectInterface = {}
 ): Promise<ApiResponse<T>> => {
   try {
-    const authHeaders = {
-      ...customHeaders,
-      ...(token ? { Authorization: `Token ${token}` } : {}),
-    };
     const response: AxiosResponse<T> = await axios({
       method,
       url,
       data,
-      headers: authHeaders,
-      // withCredentials: true,
+      headers: { ...headersList, ...customHeaders },
+      withCredentials: true, // Crucial for HttpOnly cookies
     });
     return {
       data: response.data,
       status: response.status,
     };
   } catch (error: any) {
-    throw error; // Rethrow the error to be handled where the function is called
+    if (error.response) {
+      // Return error response from server if available
+      return {
+        data: error.response.data,
+        status: error.response.status,
+      };
+    }
+    throw error;
   }
 };
-
-// export const fetchUserSetting = async (token: string) => {
-//   const customHeaders = {
-//     ...headersList,
-//     Authorization: `Token ${token}`,
-//   };
-//   return fetchData(endpoints.USER_PROFILE_SETTING, customHeaders);
-// };
-
-// export const ChangeUserSetting = async (profileData: any, token: string) => {
-//   const customHeaders = {
-//     ...headersList,
-//     Authorization: `Token ${token}`,
-//   };
-//   return patchData(endpoints.USER_PROFILE_SETTING, customHeaders, profileData);
-// };
-
-// export const createOrder = async (subscription_plan_id: number, token: string) => {
-//   const customHeaders = {
-//     ...headersList,
-//     Authorization: `Token ${token}`,
-//   };
-//   return postData(endpoints.CREATE_ORDER, { subscription_plan_id }, customHeaders);
-// };

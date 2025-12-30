@@ -1,14 +1,6 @@
 import React from "react";
 import { AuthForm } from "../shared/AuthForm";
-import {
-  firebaseAuthService,
-  firebaseCollections,
-  firestoreSetOperation,
-  getFormConfig,
-} from "@/src/utilities";
-import { UserCredential } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { getFormConfig, registerUser } from "@/src/utilities";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -17,60 +9,36 @@ function SignupScreen() {
   const router = useRouter();
 
   const handleSubmit = async (values: Record<string, string>) => {
+    console.log(values,'values');
+    
     try {
-      // 1️⃣ Create user in Firebase Auth
-      const userCredential: UserCredential = (await firebaseAuthService(
-        "signup",
-        values
-      )) as UserCredential;
-      const user = userCredential.user;
-      console.log("Signup attempt:", user);
+      const response = await registerUser(values);
 
-      // 2️⃣ Send verification link
-      await firebaseAuthService("sendVerificationLink", { user });
-
-      // 4️⃣ Update Firebase user profile (optional)
-      await firebaseAuthService("updateProfile", {
-        user,
-        username: values?.username,
-      });
-
-      // 3️⃣ Store extra user info in Firestore
-      firestoreSetOperation(
-        firebaseCollections.USERS,
-        {
-          uid: user.uid,
-          user_name: values?.username,
-          profilePic: "",
-          email: values?.email,
-          created_at: serverTimestamp(),
-        },
-        [user.uid]
-      );
-
-      toast.success("User registered successfully!", {
-        description:
-          "Verification link has been sent to your registered email address",
-        action: {
-          label: "Okay",
-          onClick: () => router.push("/login"),
-        },
-        onAutoClose: () => {
-          router.push("/login");
-        },
-      });
-    } catch (error) {}
+      if (response.status === 201) {
+        toast.success("User registered successfully!", {
+          description: "Please login with your credentials.",
+          action: {
+            label: "Login",
+            onClick: () => router.push("/login"),
+          },
+          onAutoClose: () => {
+            router.push("/login");
+          },
+        });
+        router.push("/login"); // Immediate redirect or wait?
+      }
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast.error(error.response?.data?.error || "Signup failed");
+    }
   };
 
   const handleGoogleSignup = () => {
-    console.log("Google signup clicked");
-
-    // Google signup logic would go here
+    console.log("Google signup clicked - Not implemented yet");
   };
 
   const handleNavigateToLogin = () => {
-    console.log("Navigate to login");
-    // Navigation logic would go here
+    router.push("/login");
   };
 
   return (

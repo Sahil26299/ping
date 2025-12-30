@@ -2,12 +2,14 @@ import { userType } from "../commonInterface/commonInterfaces";
 
 interface keysType {
   USER_DETAILS: string;
-  RECIPIENT_SELECTED: string
+  RECIPIENT_SELECTED: string;
+  CHAT_ID: string;
 }
 
 export const keys: keysType = {
   RECIPIENT_SELECTED: "recipient_selected",
-  USER_DETAILS: "user_details"
+  USER_DETAILS: "user_details",
+  CHAT_ID: "chat_id"
 };
 
 // Function to set a value in sessionStorage

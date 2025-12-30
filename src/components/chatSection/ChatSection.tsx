@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MessageInputWithSubmit from "./components/MessageInputWithSubmit";
 import {
   chatMessage,
@@ -12,14 +12,27 @@ import ChatMessages from "./components/ChatMessages";
 function ChatSection({
   messagesArray,
   recipientDetails,
-  handleSendMessage
+  handleSendMessage,
+  handleDeselectUser
 }: {
   messagesArray: chatMessage[];
   recipientDetails: userType | GenericObjectInterface;
-  handleSendMessage: (param:string) => void
+  handleSendMessage: (param:string) => void;
+  handleDeselectUser: () => void
 }) {
   const [userDetails, setUserDetails] = useState<userType | null>(null);
+  const scrollingDiv = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    
+    if(scrollingDiv.current && messagesArray.length > 0 && scrollingDiv.current.scrollHeight > scrollingDiv.current.clientHeight){
+      scrollingDiv.current?.scrollTo({
+        top: scrollingDiv.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messagesArray, scrollingDiv])
+  
 
   useEffect(() => {
     if (recipientDetails && recipientDetails?.uid) {
@@ -29,8 +42,9 @@ function ChatSection({
       // handleFetchMessages(userInfo);
     }
   }, [recipientDetails]);
+console.log(recipientDetails,'recipientDetails');
 
-  if (!recipientDetails || !recipientDetails.user_name) {
+  if (!recipientDetails || !recipientDetails.username) {
     return (
       <div className="h-[calc(100vh-60px)] w-full flex flex-col items-center justify-center gap-1">
         <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -41,7 +55,7 @@ function ChatSection({
   }
   return (
     <div className="h-[calc(100vh-60px)] w-full flex flex-col">
-      <section className="flex flex-col flex-1 py-4 px-16 overflow-y-auto">
+      <section ref={scrollingDiv} className="flex flex-col flex-1 py-4 px-16 overflow-y-auto">
         <ChatMessages
           messages={messagesArray}
           recipientDetails={recipientDetails as userType}
@@ -49,7 +63,7 @@ function ChatSection({
         />
       </section>
       <section className="h-[50px] border-t border-border/40">
-        <MessageInputWithSubmit handleSubmitChat={handleSendMessage} />
+        <MessageInputWithSubmit handleSubmitMessage={handleSendMessage} handleDeselectUser={handleDeselectUser} />
       </section>
     </div>
   );

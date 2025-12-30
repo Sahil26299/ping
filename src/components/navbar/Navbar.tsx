@@ -86,21 +86,21 @@ export default function Navbar({
           <SidebarTrigger />
         </NavigationMenuItem>
       </NavigationMenuList>
-      {(recipientDetails && recipientDetails?.user_name && (
+      {(recipientDetails && recipientDetails?.username && (
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8 rounded-full bg-primary overflow-hidden flex items-center justify-center">
             <AvatarImage
-              src={recipientDetails.profilePic}
+              src={recipientDetails.profilePicture}
               className="object-cover"
             />
             <AvatarFallback>
-              {recipientDetails.user_name?.charAt(0)}
+              {recipientDetails.username?.charAt(0)}
             </AvatarFallback>
           </Avatar>
 
           <section className="flex flex-col">
             <span className="text-[16px] font-semibold leading-5">
-              {recipientDetails?.user_name}
+              {recipientDetails?.username}
             </span>
             {recipientDetails?.isOnline ? (
               <span className="text-[11px] font-medium text-green-500 leading-3.5">
@@ -108,7 +108,7 @@ export default function Navbar({
               </span>
             ) : (
               <span className="text-[11px] text-slate-400 leading-3.5">
-                Last seen {recipientDetails?.lastActive ? `${dayjs(convertFirestoreTimestamp(recipientDetails?.lastActive)).fromNow()}` : "Offline"}
+                {recipientDetails?.lastActive ? `Last seen ${dayjs(recipientDetails?.lastActive).fromNow()}` : "Offline"}
               </span>
             )}
           </section>

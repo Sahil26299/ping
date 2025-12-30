@@ -1,34 +1,28 @@
 "use client";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { auth, db } from "@/lib/firebase";
 import { AppSidebar } from "@/src/components/appSideBar/AppSideBar";
 import ChatSection from "@/src/components/chatSection/ChatSection";
 import Navbar from "@/src/components/navbar/Navbar";
 import {
   chatMessage,
-  firebaseCollections,
-  firestoreGetCollectionOperation,
-  firestoreReferDocOperation,
-  firestoreSendMessage,
-  firestoreUpdateOperation,
+  fetchChatMessages,
+  fetchUserChats,
+  fetchUserList,
+  fetchUserProfile,
   GenericObjectInterface,
   getSessionStorageItem,
   keys,
-  listenToChats,
-  listenToUsers,
-  resolveChatUsers,
-  resolveLastMessageSender,
-  resolveUserReference,
+  postChatMessages,
   setSessionStorageItem,
+  socketEvents,
   userType,
 } from "@/src/utilities";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { io, Socket } from "socket.io-client";
 
-function page() {
+function Page() {
   const router = useRouter();
   const [recipientDetails, setRecipientDetails] = useState<
     userType | GenericObjectInterface
@@ -43,345 +37,250 @@ function page() {
     []
   );
   const [messagesArray, setMessagesArray] = useState<chatMessage[]>([]);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  /**
-   * onAuthStateChanged is a firebase auth listener which gets triggered automatically when the login status of user changes
-   */
+  const establishSocketConnection = (
+    userId?: string,
+    mappedChats?: GenericObjectInterface[]
+  ) => {
+    const socketInstance = io("http://localhost:3001", {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
+    setSocket(socketInstance);
+    // join user room to receive latest chats
+    if (userId) {
+      console.log(userId, "userId");
+      // join user room to receive latest chats
+      socketInstance?.emit(socketEvents.JOIN_USER_ROOM, userId);
+    }
+
+    if (!recipientDetails || !recipientDetails.username) {
+      socketInstance.on(socketEvents.USER_MESSAGE, (msgData) => {
+        console.log(
+          "A user sent a message:",
+          recipientDetails,
+          msgData,
+          mappedChats
+        );
+        const updatedChats = mappedChats?.map((chat) => {
+          if (chat.chatRef === msgData.chatId) {
+            return {
+              ...chat,
+              lastMessage: msgData?.lastMessage,
+              unReadCount: chat.unReadCount + msgData?.unreadIncrement,
+            };
+          }
+          return chat;
+        });
+        if (updatedChats && updatedChats?.length > 0) {
+          console.log(
+            updatedChats?.sort(
+              (a, b) => a?.lastMessage?.sentAt - b?.lastMessage?.sentAt
+            ),
+            "updatedChats user sent"
+          );
+          setUserChatList(
+            updatedChats?.sort(
+              (a, b) => a?.lastMessage?.sentAt - b?.lastMessage?.sentAt
+            )
+          );
+        }
+      });
+    }
+
+    // Listen for individual chat messages (when user is viewing that chat)
+    socketInstance.on(socketEvents.RECEIVE_CHAT_MESSAGE, (msg) => {
+      console.log("A message received:", msg, userChatList);
+      setMessagesArray((prev) => [...prev, msg]);
+    });
+  };
+
+  // 1. Auth Check & Socket Connection
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        handleGetGlobalUsers(user);
-      } else {
+    const checkAuth = async () => {
+      try {
+        const res: GenericObjectInterface = await fetchUserProfile();
+        if (res.status === 200) {
+          const user = res?.data?.user;
+          setUserDetails(user);
+          setSessionStorageItem(keys.USER_DETAILS, user);
+
+          // Load initial data
+          fetchUsers();
+          fetchChats(user);
+        } else if (res?.status === 401) {
+          router.replace("/login");
+        }
+      } catch (error) {
+        console.error("Auth check failed", error);
         router.replace("/login");
       }
-    });
+    };
+    checkAuth();
+
+    // Cleanup: disconnect socket when component unmounts
     return () => {
-      // handleSetUserInactive();
-      unsubscribe();
+      socket?.disconnect();
     };
   }, []);
 
-  useEffect(() => {
-    const handleSessionChange = () => {
-      const recipientValue = getSessionStorageItem(keys.RECIPIENT_SELECTED);
-      const userValue = getSessionStorageItem(keys.USER_DETAILS);
-      if (recipientValue) {
-        setRecipientDetails(recipientValue);
-        handleFetchMessages(userValue, recipientValue);
-      }
-      if (userValue) {
-        setUserDetails(userValue);
-      }
-    };
-
-    window.addEventListener("sessionStorageUpdated", handleSessionChange);
-    return () => {
-      window.removeEventListener("sessionStorageUpdated", handleSessionChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!userDetails) return;
-
-    // Start listening to Firestore changes
-    const unsubscribe = listenToChats(
-      userDetails?.uid,
-      async (newMessages: GenericObjectInterface[]) => {
-        let chatsArray: any = await Promise.all(
-          newMessages?.map(async (chat) => {
-            const chatExtracted = await getDoc(chat?.chatRef);
-            const chatObject = chatExtracted.data() as GenericObjectInterface;
-            // Resolve chat users and last message sender in parallel
-            const [resolvedUsers, resolvedSender] = await Promise.all([
-              resolveChatUsers(chatObject.users || []),
-              resolveLastMessageSender(chatObject.lastMessage),
-            ]);
-            return {
-              ...chatObject,
-              unReadCount: chat?.unReadCount,
-              users: resolvedUsers,
-              lastMessage: chatObject.lastMessage
-                ? {
-                    ...chatObject.lastMessage,
-                    sender: resolvedSender,
-                  }
-                : undefined,
-            };
-          })
-        );
-        setUserChatList(chatsArray);
-        handleFetchMessages();
-      }
-    );
-
-    // Stop listening when component unmounts or chatId changes
-    return () => unsubscribe();
-  }, [userDetails]);
-
-  useEffect(() => {
-    console.log(userDetails, "userDetails");
-
-    if (!userDetails?.uid) return;
-
-    // Start listening to Firestore changes
-    const unsubscribe = listenToUsers(async (users: userType[]) => {
-      handleGetGlobalUsers(userDetails);
-      if (recipientDetails?.uid) {
-        let recipientValue = users?.find(
-          (user) => user?.uid === recipientDetails?.uid
-        );
-        setSessionStorageItem(keys.RECIPIENT_SELECTED, recipientValue || null);
-      }
-    });
-
-    // Stop listening when component unmounts
-    return () => unsubscribe();
-  }, [userDetails?.uid, recipientDetails?.uid]);
-
-  const handleSetUserInactive = async () => {
+  // 2. Fetch Global Users
+  const fetchUsers = async () => {
     try {
-      const data = {
-        lastActive: serverTimestamp(),
-        isOnline: false,
-      };
-      await firestoreUpdateOperation(firebaseCollections.USERS, data, [
-        userDetails?.uid,
-      ]);
-    } catch (error) {}
-  };
-
-  /**
-   * Get filtered users list (excluding current user)
-   */
-  const getUsersList = (
-    usersArray: GenericObjectInterface[],
-    currentUserId: string
-  ): GenericObjectInterface[] => {
-    return usersArray?.filter(
-      (user: GenericObjectInterface) => user?.uid !== currentUserId
-    );
-  };
-
-  /**
-   * Step 1: Get all users,
-   * Step 2: Get user's chat records (recipients),
-   * step 3: Save current user, list of other users and chat records in a state
-   * @param currentUserDetails
-   * @returns
-   */
-  const handleGetGlobalUsers = async (
-    currentUserDetails: GenericObjectInterface
-  ) => {
-    try {
-      // ==================== HELPER FUNCTIONS ====================
-
-      /**
-       * Resolve a single chat object with all its references
-       */
-      const resolveChatObject = async (
-        chatRef: GenericObjectInterface
-      ): Promise<GenericObjectInterface | null> => {
-        try {
-          const chatDoc = await getDoc(chatRef?.chatRef);
-          if (!chatDoc.exists()) return null;
-
-          const chatObject = chatDoc.data() as GenericObjectInterface;
-
-          // Resolve chat users and last message sender in parallel
-          const [resolvedUsers, resolvedSender] = await Promise.all([
-            resolveChatUsers(chatObject.users || []),
-            resolveLastMessageSender(chatObject.lastMessage),
-          ]);
-
-          return {
-            ...chatObject,
-            unReadCount: chatRef?.unReadCount,
-            users: resolvedUsers,
-            lastMessage: chatObject.lastMessage
-              ? {
-                  ...chatObject.lastMessage,
-                  sender: resolvedSender,
-                }
-              : undefined,
-          };
-        } catch (error) {
-          console.error("Error resolving chat object:", error);
-          return null;
-        }
-      };
-
-      /**
-       * Fetch and resolve all user chats
-       */
-      const getUserChats = async (
-        userId: string
-      ): Promise<GenericObjectInterface[]> => {
-        try {
-          const chatRefs = await firestoreGetCollectionOperation(
-            firebaseCollections.USERS,
-            userId,
-            firebaseCollections.CHATS
-          );
-
-          if (!chatRefs || !Array.isArray(chatRefs)) {
-            return [];
-          }
-
-          // Resolve all chats in parallel
-          const resolvedChats = await Promise.all(
-            chatRefs
-              ?.filter((chat: GenericObjectInterface) => chat?.chatRef)
-              .map(async (chat: GenericObjectInterface) =>
-                resolveChatObject(chat)
-              )
-          );
-          console.log(resolvedChats, chatRefs, "resolvedChats");
-
-          return resolvedChats?.filter(Boolean) as GenericObjectInterface[];
-        } catch (error) {
-          console.error("Error fetching user chats:", error);
-          return [];
-        }
-      };
-
-      /**
-       * Update user details in state and session storage
-       */
-      const updateUserDetails = (user: GenericObjectInterface) => {
-        const userDetailsWithApiKey: GenericObjectInterface = {
-          ...user,
-          apiKey: currentUserDetails?.apiKey,
-        };
-        setUserDetails(userDetailsWithApiKey);
-        setSessionStorageItem(keys.USER_DETAILS, userDetailsWithApiKey);
-      };
-
-      // ==================== MAIN LOGIC ====================
-
-      // Fetch all users
-      const usersArray = await firestoreGetCollectionOperation(
-        firebaseCollections.USERS
-      );
-
-      if (!usersArray || !Array.isArray(usersArray)) {
-        // console.warn("Users array is invalid or empty");
-        return;
-      }
-
-      // Find current user
-      const currentUser = usersArray.find(
-        (user: GenericObjectInterface) => user?.uid === currentUserDetails?.uid
-      );
-
-      if (!currentUser) {
-        // console.warn("Current user not found in users array");
-        return;
-      }
-
-      // Set users list (excluding current user) and fetch chats in parallel
-      const [filteredUsersList, userChats] = await Promise.all([
-        Promise.resolve(getUsersList(usersArray, currentUserDetails.uid)),
-        getUserChats(currentUser.uid),
-      ]);
-      console.log(userChats, "userChats");
-
-      setUsersList(filteredUsersList as userType[]);
-      setUserChatList(userChats);
-
-      // Update user details
-      updateUserDetails(currentUser);
+      const res: GenericObjectInterface = await fetchUserList();
+      setUsersList(res?.data?.users);
     } catch (error) {
-      console.error("Error in handleGetGlobalUsers:", error);
+      console.error(error);
     } finally {
       setListLoading(false);
     }
   };
 
-  const handleReadMessages = async (
-    userInfo: userType = userDetails as userType,
-    recipientInfo: userType = recipientDetails as userType
+  // 3. Fetch Chats (Polling)
+  const fetchChats = async (
+    user: userType | GenericObjectInterface = userDetails
   ) => {
     try {
-      const chatId = [userInfo?.uid, recipientInfo.uid].sort().join("_");
-      await firestoreUpdateOperation(
-        `${firebaseCollections.USERS}/${userInfo?.uid}/${firebaseCollections.CHATS}/${chatId}`,
-        { unReadCount: 0 },
-        []
-      );
-    } catch (error) {}
+      const res: GenericObjectInterface = await fetchUserChats();
+      // Map API chats to frontend expected format
+      const mappedChats = res?.data?.chats?.map((c: any) => ({
+        chatRef: c._id,
+        users: c.participants?.map((u: userType) => ({ ...u, uid: u._id })),
+        lastMessage: c.lastMessage
+          ? {
+              text: c.lastMessage.content,
+              sentAt: c.lastMessage.timestamp,
+              sender: {
+                ...c.lastMessage.sender,
+                uid: c.lastMessage.sender._id,
+              },
+            }
+          : null,
+        unReadCount: c.unreadCounts?.[user.uid as string] || 0,
+      }));
+      establishSocketConnection(user?.uid, mappedChats);
+      setUserChatList(mappedChats);
+    } catch (error) {
+      console.error("Fetch chats error", error);
+    }
   };
 
-  const handleFetchMessages = async (
-    userInfo: userType = userDetails as userType,
-    recipientInfo: userType = recipientDetails as userType
-  ) => {
+  // // 4. Client-side Session Restoration
+  // useEffect(() => {
+  //   const handleSessionChange = () => {
+  //     const chatId = getSessionStorageItem(keys.CHAT_ID);
+  //     const recipientValue = getSessionStorageItem(keys.RECIPIENT_SELECTED);
+  //     if (chatId && recipientValue) {
+  //       setChatId(chatId);
+  //       setRecipientDetails(recipientValue);
+  //     }
+  //   };
+
+  //   handleSessionChange(); // Run once on mount
+
+  //   window.addEventListener("sessionStorageUpdated", handleSessionChange);
+  //   return () => {
+  //     window.removeEventListener("sessionStorageUpdated", handleSessionChange);
+  //   };
+  // }, []);
+
+  // 5. Fetch Messages
+  const fetchMessages = async (currentChatId: string) => {
+    if (!currentChatId) return;
     try {
-      const chatId = [userInfo?.uid, recipientInfo.uid].sort().join("_");
-
-      const messagesCollection = await firestoreGetCollectionOperation(
-        firebaseCollections.CHATS,
-        chatId,
-        firebaseCollections.MESSAGES
+      const res: GenericObjectInterface = await fetchChatMessages(
+        currentChatId
       );
-      const result: chatMessage[] = (await Promise.all(
-        messagesCollection?.map(async (message) => {
-          const resolvedReadByUsers = await resolveChatUsers(message?.readBy);
-          const resolvedSender = await resolveUserReference(message?.sender);
-          return {
-            ...message,
-            readBy: resolvedReadByUsers,
-            sender: resolvedSender,
-          };
-        }) ?? []
-      )) as chatMessage[];
-      console.log(result, "result");
-
-      handleReadMessages(userInfo, recipientInfo);
-      setMessagesArray(result?.sort((a, b) => a?.messageId - b?.messageId));
-    } catch (error) {}
+      const mappedMessages = res.data.messages.map((m: any) => ({
+        messageId: m._id,
+        text: m.content,
+        sender: m.sender,
+        createdAt: m.createdAt,
+        readBy: m.readBy,
+        messageType: "text",
+        mediaFiles: [],
+      }));
+      setMessagesArray(mappedMessages);
+    } catch (error) {
+      console.error("Fetch messages error", error);
+    }
   };
 
   const handleSendMessage = async (msg: string) => {
-    const newChats: chatMessage = {
-      messageId: messagesArray?.length,
-      createdAt: new Date(),
-      mediaFiles: [],
-      messageType: "text",
-      readBy: [userDetails as userType],
-      sender: userDetails as userType,
-      text: msg,
-    };
-    setMessagesArray((prev) => [...prev, newChats]);
+    console.log(msg, chatId, "msgmsg");
+    if (!chatId) return;
     try {
-      const chatId = [userDetails?.uid, recipientDetails.uid].sort().join("_");
-      const userChatDoc = doc(
-        db,
-        `${firebaseCollections.USERS}/${userDetails?.uid}/${firebaseCollections.CHATS}/${chatId}`
-      );
-      const chatDocs = await getDoc(userChatDoc);
-      console.log(
-        chatDocs?.exists(),
-        chatDocs?.data()?.unReadCount,
-        "user caht docs"
-      );
-      firestoreSendMessage(
-        userDetails as userType,
-        recipientDetails as userType,
-        msg,
-        chatDocs?.data()?.unReadCount,
-        messagesArray?.length + 1
-      );
-    } catch (error) {}
-  };
-  console.log(recipientDetails, "recipientDetails");
+      const response: GenericObjectInterface = await postChatMessages({
+        chatId,
+        content: msg,
+        type: "text",
+      });
+      const newMessage: chatMessage = {
+        messageId: response?.data?.message?._id,
+        text: response?.data?.message?.content,
+        sender: response?.data?.message?.sender,
+        createdAt: response?.data?.message?.createdAt,
+        readBy: response?.data?.message?.readBy,
+        messageType: "text",
+        mediaFiles: [],
+      };
+      console.log([...messagesArray, newMessage], "newMessage");
+      setMessagesArray((prev) => [...prev, newMessage]);
 
-  if (!mounted) {
-    return null;
-  }
+      socket?.emit(
+        socketEvents.SEND_MESSAGE,
+        newMessage,
+        recipientDetails?.uid,
+        chatId
+      );
+
+      fetchChats(); // Refresh sidebar list
+    } catch (error) {
+      toast.error("Failed to send message");
+    }
+  };
+
+  const handleSelectUser = (selectedUser: userType, chatId: string) => {
+    setSessionStorageItem(keys.CHAT_ID, chatId);
+    setSessionStorageItem(keys.RECIPIENT_SELECTED, selectedUser);
+    socket?.emit(socketEvents.JOIN_CHAT_ROOM, chatId);
+    // socket?.emit(socketEvents.JOIN_CHAT, chatId);
+    setUserChatList((prev) => {
+      return prev.map((chat) => {
+        if (chat.chatRef === chatId) {
+          return {
+            ...chat,
+            unReadCount: 0,
+          };
+        }
+        return chat;
+      });
+    });
+    setRecipientDetails(selectedUser);
+    setChatId(chatId);
+    fetchMessages(chatId);
+  };
+
+  const handleDeselectUser = () => {
+    setRecipientDetails({});
+    setChatId(null);
+    setMessagesArray([]);
+    setSessionStorageItem(keys.CHAT_ID, null);
+    setSessionStorageItem(keys.RECIPIENT_SELECTED, null);
+    // Just remove the listener, don't disconnect the entire socket
+    socket?.off(socketEvents.RECEIVE_CHAT_MESSAGE);
+  };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  console.log(userChatList, "userChatList");
+
+  if (!mounted) return null;
+
   return (
     <SidebarProvider className="">
       <AppSidebar
@@ -390,6 +289,7 @@ function page() {
         usersList={usersList}
         listLoading={listLoading}
         chatList={userChatList}
+        handleSelectUser={handleSelectUser}
       />
       <main className="w-full">
         <section className="h-full w-full">
@@ -398,6 +298,7 @@ function page() {
             recipientDetails={recipientDetails}
             handleSendMessage={handleSendMessage}
             messagesArray={messagesArray}
+            handleDeselectUser={handleDeselectUser}
           />
         </section>
       </main>
@@ -405,4 +306,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;
