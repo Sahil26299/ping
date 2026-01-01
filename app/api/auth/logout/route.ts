@@ -5,7 +5,8 @@ export async function POST() {
   try {
     (await cookies()).delete("token");
     return NextResponse.json({ message: "Logout successful" }, { status: 200 });
-  } catch (error) {
+  } catch {
+    console.error("Logout Error");
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

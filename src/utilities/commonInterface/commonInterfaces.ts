@@ -1,5 +1,5 @@
 // import { Dayjs } from "dayjs";
-import React, { JSX } from "react";
+import React from "react";
 /**
  * Form and Input events
  */
@@ -27,7 +27,7 @@ export interface GenericObjectInterface {
 export type ArrayOfStringType = string[];
 
 export interface userType {
-  _id?:string;
+  _id?: string;
   uid: number;
   username: string;
   email: string;
@@ -52,8 +52,8 @@ export interface chatMessage {
 }
 export interface ChatMessagesProps {
   messages: chatMessage[];
-  recipientDetails: userType
-  userDetails: userType
+  recipientDetails: userType;
+  userDetails: userType;
 }
 
 /**

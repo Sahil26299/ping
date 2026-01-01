@@ -4,7 +4,7 @@ import Chat from "@/models/Chats";
 import dbConnect from "@/lib/db";
 import { cookies } from "next/headers";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
@@ -21,10 +21,13 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     // Find chats where user is a participant
     const chats = await Chat.find()
-      .populate("participants", "username email profilePicture isOnline lastActive")
+      .populate(
+        "participants",
+        "username email profilePicture isOnline lastActive"
+      )
       .populate("lastMessage.sender", "username")
       .sort({ updatedAt: -1 });
-    
+
     return NextResponse.json({ chats }, { status: 200 });
   } catch (error) {
     console.error("Get Chats Error:", error);

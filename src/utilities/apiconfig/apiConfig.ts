@@ -3,7 +3,7 @@ import { ApiResponse, GenericObjectInterface } from "@/src/utilities";
 
 // In Next.js App Router, using relative paths /api proxies to the backend automatically
 // or we can use the full URL if needed.
-export let BASE_URL = "/api";
+export const BASE_URL = "/api";
 
 export const headersList = {
   Accept: "*/*",

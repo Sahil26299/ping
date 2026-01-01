@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Upload } from "lucide-react";
 
 function ProfilePictureDialogue(props: SimpleDialogProps) {
   const { onClose, imageSrc } = props;

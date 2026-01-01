@@ -5,7 +5,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Send } from "lucide-react";
-import { formSubmitEventType, inputMessageType, keys } from "@/src/utilities";
+import { formSubmitEventType, inputMessageType } from "@/src/utilities";
 
 function MessageInputWithSubmit({
   handleSubmitMessage,

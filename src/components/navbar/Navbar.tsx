@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
-import { convertFirestoreTimestamp, GenericObjectInterface, userType } from "@/src/utilities";
+import { GenericObjectInterface, userType } from "@/src/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import dayjs from "dayjs";
 import relativeTime from 'dayjs/plugin/relativeTime';

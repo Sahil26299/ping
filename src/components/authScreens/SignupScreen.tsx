@@ -36,9 +36,9 @@ function SignupScreen() {
     console.log("Google signup clicked - Not implemented yet");
   };
 
-  const handleNavigateToLogin = () => {
-    router.push("/login");
-  };
+  // const handleNavigateToLogin = () => {
+  //   router.push("/login");
+  // };
 
   return (
     <>
@@ -46,7 +46,7 @@ function SignupScreen() {
         formConfig={formConfig}
         onSubmit={handleSubmit}
         onSocialLogin={handleGoogleSignup}
-        onFooterAction={handleNavigateToLogin}
+        // onFooterAction={handleNavigateToLogin}
       />
     </>
   );

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     await dbConnect();
-    const chat = await Chat.findByIdAndUpdate(chatId, {
+    await Chat.findByIdAndUpdate(chatId, {
       $set: {
         [`unreadCounts.${decoded.userId}`]: 0,
       },
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       }
     });
     unreadCountUpdates[`unreadCounts.${decoded.userId}`] = 0;
-    
+
     // Update Chat's last message and increment unread counts
     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: {
@@ -116,7 +116,15 @@ export async function POST(req: NextRequest) {
       $inc: unreadCountUpdates,
     });
 
-    return NextResponse.json({ message: {...newMessage?._doc, sender: {uid: decoded.userId, username: decoded.username}} }, { status: 201 });
+    return NextResponse.json(
+      {
+        message: {
+          ...newMessage?._doc,
+          sender: { uid: decoded.userId, username: decoded.username },
+        },
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Send Message Error:", error);
     return NextResponse.json(

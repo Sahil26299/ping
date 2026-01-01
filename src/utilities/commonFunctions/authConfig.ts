@@ -1,5 +1,4 @@
 import authConfig from "../json/authConfig.json";
-import { GenericObjectInterface } from "../commonInterface/commonInterfaces";
 
 export interface FieldConfig {
   id: string;

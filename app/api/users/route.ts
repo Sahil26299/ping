@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     );
 
     // 3. Filter out current user AND users already in chat
-    let filter: any = {
+    const filter: any = {
       _id: { $nin: [decoded.userId, ...existingChatUserIds] },
     };
 
