@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
         unreadCountUpdates[`unreadCounts.${participantIdStr}`] = 1;
       }
     });
-
+    unreadCountUpdates[`unreadCounts.${decoded.userId}`] = 0;
+    
     // Update Chat's last message and increment unread counts
     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: {

@@ -21,6 +21,7 @@ export const endpoints = {
   CHATS: `${BASE_URL}/chats`,
   MESSAGES: `${BASE_URL}/messages`,
   USERS: `${BASE_URL}/users`, // For search
+  MARK_READ: `${BASE_URL}/chats/read`,
 };
 
 export const socketEvents = {

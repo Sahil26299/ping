@@ -47,8 +47,6 @@ function MessageInputWithSubmit({
         "data-placeholder": "Your message here...",
       },
       handleKeyDown: (view, event) => {
-        console.log(event.key === "Escape", "event.key");
-
         // Submit form on Enter (but allow Shift+Enter for new line)
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();

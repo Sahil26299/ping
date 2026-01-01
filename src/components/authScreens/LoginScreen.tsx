@@ -14,7 +14,6 @@ function LoginScreen() {
 
   const checkUser = async () => {
     const response = await fetchUserProfile();
-    console.log(response);
     if (response.status === 200) {
       router.push("/dashboard");
     }

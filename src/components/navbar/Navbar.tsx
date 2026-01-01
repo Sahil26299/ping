@@ -41,7 +41,7 @@ export default function Navbar({
   variant = "dashboard",
   recipientDetails,
 }: NavbarProps) {
-
+  
   // Landing page variant
   if (variant === "landing") {
     return (

@@ -347,7 +347,7 @@ function PingUserDialog({
       <DialogHeader>
         <DialogTitle>Start chatting?</DialogTitle>
         <DialogDescription>
-          Send Hi! to {selectedUser?.username}.
+          Add {selectedUser?.username} as a friend?
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
@@ -356,7 +356,7 @@ function PingUserDialog({
             onClick={onSend}
             className="py-1 rounded-md px-4 bg-primary text-white cursor-pointer"
           >
-            Continue
+            Send Hi!
           </DialogClose>
           <DialogClose className="py-1 rounded-md px-4 border-primary border text-white cursor-pointer">
             Cancel
@@ -395,7 +395,6 @@ function ChatListItem({
   recipientDetails: userType | GenericObjectInterface;
   onSelectUser: (user: userType, chatId: string) => void;
 }) {
-  console.log(chat, "chat");
 
   return (
     <SidebarMenuItem key={chatRecipient?.uid}>
@@ -411,17 +410,19 @@ function ChatListItem({
             <UserAvatar user={chatRecipient} />
             <section className="flex flex-col">
               <span
-                className={`flex items-center gap-2${
+                className={`flex items-center gap-2 ${
                   recipientDetails?.uid === chatRecipient?.uid
                     ? "text-secondary-foreground"
                     : ""
                 }`}
               >
                 {chatRecipient?.username}
-                {chat?.unReadCount !== 0 && (
-                  <sup className="h-4 w-4 text-background text-[10px] ml-1 font-medium rounded-full bg-green-600 flex flex-col items-center justify-center">
-                    {chat?.unReadCount}
-                  </sup>
+                {chatRecipient?.isOnline && (
+                  <div className="h-[6px] w-[6px] rounded-full bg-green-600">
+                    {chat?.unReadCount !== 0 && (
+                      <div className="h-[6px] w-[6px] rounded-full bg-green-200 animate-ping" />
+                    )}
+                  </div>
                 )}
               </span>
               <div
@@ -432,10 +433,10 @@ function ChatListItem({
               ></div>
             </section>
           </section>
-          {chatRecipient?.isOnline && (
-            <div className="h-[6px] w-[6px] rounded-full bg-green-600">
-              <div className="h-[6px] w-[6px] rounded-full bg-green-200 animate-ping" />
-            </div>
+          {chat?.unReadCount !== 0 && (
+            <span className="h-5 w-5 text-green-500 text-[11px] font-medium flex flex-col items-center justify-center">
+              {chat?.unReadCount}
+            </span>
           )}
         </div>
       </SidebarMenuButton>
@@ -475,7 +476,7 @@ function GlobalUserItem({
             onClick={onPingClick}
             className="opacity-0 group-hover/aGroup:opacity-100 h-[24px] text-sm font-normal bg-primary px-2 rounded-md cursor-pointer"
           >
-            Ping
+            + Friend
           </DialogTrigger>
         </div>
       </SidebarMenuButton>
@@ -491,7 +492,7 @@ export function AppSidebar({
   userDetails,
   listLoading,
   chatList,
-  handleSelectUser
+  handleSelectUser,
 }: {
   recipientDetails: userType | GenericObjectInterface;
   userDetails: userType | GenericObjectInterface;

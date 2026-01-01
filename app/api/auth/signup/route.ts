@@ -7,7 +7,6 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     const { username, email, password } = await req.json();
-    console.log(username, email, password,'username, email, password');
     
     if (!username || !email || !password) {
       return NextResponse.json(

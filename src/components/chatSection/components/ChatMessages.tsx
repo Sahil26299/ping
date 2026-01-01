@@ -11,9 +11,7 @@ function ChatMessages({
   return (
     <div className="flex flex-col w-full h-full gap-3">
       {messages?.length > 0 &&
-        messages?.map((message: chatMessage) => {
-          console.log(userDetails?.uid, message, messages, 'userDetails x message');
-          
+        messages?.map((message: chatMessage) => {          
           return (
             <section
               key={message?.messageId}

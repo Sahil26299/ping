@@ -57,7 +57,8 @@ import {
   fetchUserChats,
   fetchChatMessages,
   postChatMessages,
-  createUserChats
+  createUserChats,
+  markChatAsRead
 } from "./apiconfig/chatHandler";
 
 import {
@@ -114,6 +115,7 @@ export {
   postChatMessages,
   createUserChats,
   socketEvents,
+  markChatAsRead,
   // firebaseCollections, // Removing as I likely removed it from apiConfig in step 195
   firestoreUpdateOperation,
   firestoreSetOperation,

@@ -22,17 +22,39 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
+    // 1. Find all chats where the current user is a participant
+    const existingChats = await import("@/models/Chats").then((mod) =>
+      mod.default.find({ participants: decoded.userId })
+    );
+
+    // 2. Extract IDs of users who are already in a chat with the current user
+    const existingChatUserIds = existingChats.reduce(
+      (acc: string[], chat: any) => {
+        chat.participants.forEach((participantId: any) => {
+          const pIdStr = participantId.toString();
+          if (pIdStr !== decoded.userId) {
+            acc.push(pIdStr);
+          }
+        });
+        return acc;
+      },
+      []
+    );
+
+    // 3. Filter out current user AND users already in chat
     let filter: any = {
-      _id: { $ne: decoded.userId }, // Exclude self ($ne : not equals)
+      _id: { $nin: [decoded.userId, ...existingChatUserIds] },
     };
 
     if (query) {
       filter.username = { $regex: query, $options: "i" };
     }
 
-    const users = await User.find(filter).select("username email profilePicture isOnline lastActive ");
+    const users = await User.find(filter).select(
+      "username email profilePicture isOnline lastActive "
+    );
 
-    // Map _id to uid to keep frontend compatible if possible, or just use _id
+    // Map _id to uid to keep frontend compatible
     const mappedUsers = users.map((u) => ({
       uid: u._id.toString(),
       ...u.toObject(),

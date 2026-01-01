@@ -2,8 +2,8 @@ import { GenericObjectInterface } from "../commonInterface/commonInterfaces";
 import { endpoints, makeApiRequest } from "./apiConfig";
 
 /**
- * Fetch user chats. 
- * This fetches all chats of the current user(based on auth token). 
+ * Fetch user chats.
+ * This fetches all chats of the current user(based on auth token).
  * It returns an array of objects containing chat details (including chat id).
  */
 export const fetchUserChats = async () => {
@@ -22,7 +22,7 @@ export const createUserChats = async (data: GenericObjectInterface) => {
  * Fetch chat messages
  * Based on chat ID fetch chat messages (array of objects)
  */
-export const fetchChatMessages = async (chatId:string) => {
+export const fetchChatMessages = async (chatId: string) => {
   return makeApiRequest("GET", `${endpoints.MESSAGES}?chatId=${chatId}`);
 };
 
@@ -31,4 +31,15 @@ export const fetchChatMessages = async (chatId:string) => {
  */
 export const postChatMessages = async (data: GenericObjectInterface) => {
   return makeApiRequest("POST", endpoints.MESSAGES, data);
+};
+
+/**
+ * Mark a chat as read based on chat id
+ * @param chatId chat id
+ * @returns
+ */
+export const markChatAsRead = async (chatId: string) => {
+  return makeApiRequest("POST", endpoints.MARK_READ, {
+    chatId: chatId,
+  });
 };

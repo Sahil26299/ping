@@ -8,17 +8,20 @@ import {
   userType,
 } from "@/src/utilities";
 import ChatMessages from "./components/ChatMessages";
+import { Spinner } from "@/components/ui/spinner";
 
 function ChatSection({
   messagesArray,
   recipientDetails,
   handleSendMessage,
-  handleDeselectUser
+  handleDeselectUser,
+  loader
 }: {
   messagesArray: chatMessage[];
   recipientDetails: userType | GenericObjectInterface;
   handleSendMessage: (param:string) => void;
-  handleDeselectUser: () => void
+  handleDeselectUser: () => void;
+  loader: "" | "messages" | "chats"
 }) {
   const [userDetails, setUserDetails] = useState<userType | null>(null);
   const scrollingDiv = useRef<HTMLDivElement>(null);
@@ -28,7 +31,7 @@ function ChatSection({
     if(scrollingDiv.current && messagesArray.length > 0 && scrollingDiv.current.scrollHeight > scrollingDiv.current.clientHeight){
       scrollingDiv.current?.scrollTo({
         top: scrollingDiv.current.scrollHeight,
-        behavior: "smooth",
+        behavior: "instant",
       });
     }
   }, [messagesArray, scrollingDiv])
@@ -42,7 +45,6 @@ function ChatSection({
       // handleFetchMessages(userInfo);
     }
   }, [recipientDetails]);
-console.log(recipientDetails,'recipientDetails');
 
   if (!recipientDetails || !recipientDetails.username) {
     return (
@@ -50,6 +52,14 @@ console.log(recipientDetails,'recipientDetails');
         <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <span className="text-4xl font-bold">P</span>
         </div>
+      </div>
+    );
+  }
+  else if(loader === "messages"){
+    return (
+      <div className="h-[calc(100vh-60px)] w-full flex items-center justify-center gap-2">
+        <Spinner />
+        <span className="animate-pulse text-gray-300" >Loading messages...</span>
       </div>
     );
   }

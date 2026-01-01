@@ -9,7 +9,6 @@ function SignupScreen() {
   const router = useRouter();
 
   const handleSubmit = async (values: Record<string, string>) => {
-    console.log(values,'values');
     
     try {
       const response = await registerUser(values);
