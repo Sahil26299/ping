@@ -20,7 +20,7 @@ export async function GET() {
 
     await dbConnect();
     // Find chats where user is a participant
-    const chats = await Chat.find()
+    const chats = await Chat.find({ participants: decoded.userId })
       .populate(
         "participants",
         "username email profilePicture isOnline lastActive"
