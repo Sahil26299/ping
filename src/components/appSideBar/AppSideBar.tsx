@@ -376,7 +376,7 @@ function UserAvatar({
 }) {
   return (
     <Avatar
-      className={`${size} rounded-full bg-primary overflow-hidden flex items-center justify-center`}
+      className={`${size} rounded-full bg-gray-600 overflow-hidden flex items-center justify-center`}
     >
       <AvatarImage src={user.profilePicture} className="object-cover" />
       <AvatarFallback>{user.username?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -408,7 +408,7 @@ function ChatListItem({
         <div>
           <section className="flex items-center gap-2">
             <UserAvatar user={chatRecipient} />
-            <section className="flex flex-col">
+            <section className="flex flex-col w-4/5">
               <span
                 className={`flex items-center gap-2 ${
                   recipientDetails?.uid === chatRecipient?.uid
@@ -493,6 +493,7 @@ export function AppSidebar({
   listLoading,
   chatList,
   handleSelectUser,
+  handleSendMessage
 }: {
   recipientDetails: userType | GenericObjectInterface;
   userDetails: userType | GenericObjectInterface;
@@ -500,6 +501,7 @@ export function AppSidebar({
   listLoading: boolean;
   chatList: GenericObjectInterface[];
   handleSelectUser: (selectedUser: userType, chatId: string) => void;
+  handleSendMessage: (message: string, chat_id: string | null, recipientId: string | null) => void;
 }) {
   const router = useRouter();
   const [searchedText, setSearchedText] = useState("");
@@ -598,7 +600,7 @@ export function AppSidebar({
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleInitChat = async () => {
     try {
       if (!pingUserSelected) return;
 
@@ -607,11 +609,7 @@ export function AppSidebar({
       });
       const chatId = res?.data?.chat._id;
 
-      await postChatMessages({
-        chatId,
-        content: "Hi!",
-        type: "text",
-      });
+      handleSendMessage("Hi!", chatId, pingUserSelected?.uid);
 
       handleSelectUser(pingUserSelected, chatId);
       toast.success("Sent Hi!");
@@ -749,6 +747,7 @@ export function AppSidebar({
                       const chatRecipient = extractRecipientFromChatUsers(
                         chat?.users
                       );
+                      
                       if (chatRecipient) {
                         return (
                           <ChatListItem
@@ -803,7 +802,7 @@ export function AppSidebar({
                     ))}
                     <PingUserDialog
                       selectedUser={pingUserSelected}
-                      onSend={handleSendMessage}
+                      onSend={handleInitChat}
                     />
                   </Dialog>
                 </SidebarMenu>

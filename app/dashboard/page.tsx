@@ -39,7 +39,7 @@ function Page() {
     []
   );
   const [messagesArray, setMessagesArray] = useState<chatMessage[]>([]);
-  const [loader, setLoader] = useState<"" | "messages" | "chats">("")
+  const [loader, setLoader] = useState<"" | "messages" | "chats">("");
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -48,7 +48,7 @@ function Page() {
     setMessagesArray((prev) => {
       // Check if message already exists
       const exists = prev.some((msg) => msg.messageId === newMessage.messageId);
-      
+
       if (exists) {
         return prev; // Don't add if it already exists
       }
@@ -56,14 +56,9 @@ function Page() {
     });
   };
 
-  const listenForChatMessages = (socketInstance: Socket | null = socket) => {
-    // Listen for individual chat messages (when user is viewing that chat)
-    socketInstance?.on(socketEvents.RECEIVE_CHAT_MESSAGE, (msg) => {
-      addMessageIfUnique(msg);
-    });
-  };
-
-  const establishSocketConnection = (userId?: string) => {
+  const establishSocketConnection = (user?: userType) => {
+    // Step 1.
+    // Initialize socket io connection
     const socketInstance = io(
       "chat-socket-server-production-478b.up.railway.app",
       {
@@ -71,50 +66,57 @@ function Page() {
         transports: ["websocket"],
       }
     );
+    // set socket instance to a state variable to use it throughout the screen
     setSocket(socketInstance);
-    // join user room to receive latest chats
-    if (userId) {
-      // join user room to receive latest chats
-      socketInstance?.emit(socketEvents.JOIN_USER_ROOM, userId);
+
+    // Step 2.
+    // join user room (dashboard) to receive latest chats
+    if (user?.uid) {
+      socketInstance?.emit(socketEvents.JOIN_USER_ROOM, user?.uid);
+      console.log(`User ${user?.uid} joined the dashboard.`);
     }
 
-    // listen for each chats.
-    socketInstance.on(socketEvents.USER_MESSAGE, (msgData) => {
+    // Step 3.
+    // Start listening for new chats.
+    socketInstance.on(socketEvents.RECEIVE_NEW_CHAT, (msgData) => {
       const recipient = getSessionStorageItem(keys.RECIPIENT_SELECTED);
-
+      console.log(msgData, "joined user recved msgData");
       setUserChatList((prev) => {
-        const updatedChats = prev?.map((chat) => {
-
-          if (chat.chatRef === msgData.chatId) {
-            let finalCount = chat.unReadCount + msgData?.unreadIncrement;
-
-            // if recipient is selected AND matches the sender
-            if (
-              recipient &&
-              (msgData?.lastMessage?.sender?.uid === recipient?._id ||
-                msgData?.lastMessage?.sender?.uid === recipient?.uid)
-            ) {
-              finalCount = 0; // Reset to 0 if chat is open
-              // Chat is open, mark as read in DB so it doesn't show as unread on refresh
-              markChatAsRead(msgData.chatId);
+        const alreadyExists = prev?.some((chat) => chat.chatRef === msgData.chatId);
+        if(alreadyExists){
+          const updatedChats = prev?.map((chat) => {
+            if (chat.chatRef === msgData.chatId) {
+              let finalCount = chat.unReadCount + msgData?.unreadIncrement;
+  
+              // if recipient is selected AND matches the sender
+              if (
+                recipient &&
+                (msgData?.lastMessage?.sender?.uid === recipient?._id ||
+                  msgData?.lastMessage?.sender?.uid === recipient?.uid)
+              ) {
+                finalCount = 0; // Reset to 0 if chat is open
+                // Chat is open, mark as read in DB so it doesn't show as unread on refresh
+                markChatAsRead(msgData.chatId);
+              }
+  
+              return {
+                ...chat,
+                lastMessage: msgData?.lastMessage,
+                unReadCount: finalCount,
+              };
             }
-
-            return {
-              ...chat,
-              lastMessage: msgData?.lastMessage,
-              unReadCount: finalCount,
-            };
-          }
-          return chat;
-        });
-
-        return updatedChats?.sort(
-          (a, b) => a?.lastMessage?.sentAt - b?.lastMessage?.sentAt
-        );
+            return chat;
+          });
+  
+          return updatedChats?.sort(
+            (a, b) => a?.lastMessage?.sentAt - b?.lastMessage?.sentAt
+          );
+        }else{
+          fetchChats(user)
+          return prev;
+        }
       });
     });
-
-    listenForChatMessages(socketInstance);
   };
 
   // 1. Auth Check & Socket Connection
@@ -129,7 +131,7 @@ function Page() {
           removeSessionStorageItem(keys.RECIPIENT_SELECTED);
 
           // Connect socket once upon auth
-          establishSocketConnection(user?.uid);
+          establishSocketConnection(user);
 
           // Load initial data
           fetchUsers();
@@ -166,7 +168,7 @@ function Page() {
   const fetchChats = async (
     user: userType | GenericObjectInterface = userDetails
   ) => {
-    setLoader("chats")
+    setLoader("chats");
     try {
       const res: GenericObjectInterface = await fetchUserChats();
       // Map API chats to frontend expected format
@@ -190,33 +192,27 @@ function Page() {
     } catch (error) {
       console.error("Fetch chats error", error);
     } finally {
-      setLoader("")
+      setLoader("");
     }
   };
 
-  // // 4. Client-side Session Restoration
-  // useEffect(() => {
-  //   const handleSessionChange = () => {
-  //     const chatId = getSessionStorageItem(keys.CHAT_ID);
-  //     const recipientValue = getSessionStorageItem(keys.RECIPIENT_SELECTED);
-  //     if (chatId && recipientValue) {
-  //       setChatId(chatId);
-  //       setRecipientDetails(recipientValue);
-  //     }
-  //   };
+  /**
+   * Listen for individual chat messages (when user is viewing that chat)
+   * @param socketInstance Socket instance to listen on
+   */
+  const listenForChatMessages = (socketInstance: Socket | null = socket) => {
+    socketInstance?.on(socketEvents.RECEIVE_MESSAGES_IN_CHAT, (msg) => {
+      addMessageIfUnique(msg);
+    });
+  };
 
-  //   handleSessionChange(); // Run once on mount
-
-  //   window.addEventListener("sessionStorageUpdated", handleSessionChange);
-  //   return () => {
-  //     window.removeEventListener("sessionStorageUpdated", handleSessionChange);
-  //   };
-  // }, []);
-
-  // 5. Fetch Messages
+  /**
+   * Fetch messages for a specific chat (based on chatId)
+   * @param currentChatId ID of the chat to fetch messages for
+   */
   const fetchMessages = async (currentChatId: string) => {
     if (!currentChatId) return;
-    setLoader("messages")
+    setLoader("messages");
     try {
       const res: GenericObjectInterface = await fetchChatMessages(
         currentChatId
@@ -234,15 +230,19 @@ function Page() {
     } catch (error) {
       console.error("Fetch messages error", error);
     } finally {
-      setLoader("")
+      setLoader("");
     }
   };
 
-  const handleSendMessage = async (msg: string) => {
-    if (!chatId) return;
+  const handleSendMessage = async (
+    msg: string,
+    chat_id: string | null = chatId,
+    recipientId: string | null = recipientDetails?.uid
+  ) => {
+    if (!chat_id) return;
     try {
       const response: GenericObjectInterface = await postChatMessages({
-        chatId,
+        chatId: chat_id,
         content: msg,
         type: "text",
       });
@@ -260,8 +260,8 @@ function Page() {
       socket?.emit(
         socketEvents.SEND_MESSAGE,
         newMessage,
-        recipientDetails?.uid,
-        chatId
+        recipientId,
+        chat_id
       );
 
       fetchChats(); // Refresh sidebar list
@@ -271,11 +271,21 @@ function Page() {
   };
 
   const handleSelectUser = (selectedUser: userType, chatId: string) => {
+    // Set chat ID and User details in sessionStorage
     setSessionStorageItem(keys.CHAT_ID, chatId);
     setSessionStorageItem(keys.RECIPIENT_SELECTED, selectedUser);
+
+    // Set recipient details and chat ID
+    setRecipientDetails(selectedUser);
+    setChatId(chatId);
+
+    // Join chat room (Socket) to start listening to new messages (real time connection)
     socket?.emit(socketEvents.JOIN_CHAT_ROOM, chatId);
+
+    // After joining a chat room, start listening to messages in that chat
     listenForChatMessages();
-    // socket?.emit(socketEvents.JOIN_CHAT, chatId);
+
+    // Reset unread count for the selected chat
     setUserChatList((prev) => {
       return prev.map((chat) => {
         if (chat.chatRef === chatId) {
@@ -287,8 +297,8 @@ function Page() {
         return chat;
       });
     });
-    setRecipientDetails(selectedUser);
-    setChatId(chatId);
+
+    // Fetch messages for the selected chat
     fetchMessages(chatId);
   };
 
@@ -299,7 +309,7 @@ function Page() {
     removeSessionStorageItem(keys.CHAT_ID);
     removeSessionStorageItem(keys.RECIPIENT_SELECTED);
     // Just remove the listener, don't disconnect the entire socket
-    socket?.off(socketEvents.RECEIVE_CHAT_MESSAGE);
+    socket?.off(socketEvents.RECEIVE_MESSAGES_IN_CHAT);
   };
 
   useEffect(() => {
@@ -317,6 +327,7 @@ function Page() {
         listLoading={listLoading}
         chatList={userChatList}
         handleSelectUser={handleSelectUser}
+        handleSendMessage={handleSendMessage}
       />
       <main className="w-full">
         <section className="h-full w-full">

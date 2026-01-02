@@ -19,7 +19,14 @@ export async function GET() {
     }
 
     await dbConnect();
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      { isOnline: true, lastActive: new Date() },
+      {
+        new: true,
+      }
+    ).select("-password");
+    // const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -35,6 +42,7 @@ export async function GET() {
           countryCode: user.countryCode,
           phone: user.phone,
           isOnline: user.isOnline,
+          lastActive: user.lastActive,
         },
       },
       { status: 200 }

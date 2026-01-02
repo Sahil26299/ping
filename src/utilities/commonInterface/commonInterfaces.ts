@@ -28,7 +28,7 @@ export type ArrayOfStringType = string[];
 
 export interface userType {
   _id?: string;
-  uid: number;
+  uid: string;
   username: string;
   email: string;
   profilePicture: string;

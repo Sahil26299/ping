@@ -28,8 +28,8 @@ export const socketEvents = {
   JOIN_USER_ROOM: "join-user-room",
   JOIN_CHAT_ROOM: "join-chat-room",
   SEND_MESSAGE: "send-message",
-  RECEIVE_CHAT_MESSAGE: "chat-message",
-  USER_MESSAGE: "user-message",
+  RECEIVE_MESSAGES_IN_CHAT: "chat-message", // when user is viewing messages inside a particular chat
+  RECEIVE_NEW_CHAT: "user-message", // when user is on dashboard, without any of the chat opened and new message is received
   DISCONNECT: "disconnect",
 };
 
