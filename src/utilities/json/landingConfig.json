@@ -2,7 +2,13 @@
   "meta": {
     "title": "Ping - Connect & Chat Instantly",
     "description": "Experience real-time messaging with Ping. Connect with friends, collaborate with teams, and stay in touch with the people that matter most.",
-    "keywords": ["messaging", "chat", "real-time", "communication", "team collaboration"]
+    "keywords": [
+      "messaging",
+      "chat",
+      "real-time",
+      "communication",
+      "team collaboration"
+    ]
   },
   "branding": {
     "logo": {
@@ -21,7 +27,7 @@
       "text": "Connect & Chat Instantly",
       "highlightedWord": "Chat",
       "highlightedWordIndex": 1,
-      "size": "text-5xl lg:text-6xl font-bold",
+      "size": "text-4xl md:text-5xl lg:text-6xl font-bold",
       "gradient": "bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
     },
     "description": "Experience real-time messaging with Ping. Connect with friends, collaborate with teams, and stay in touch with the people that matter most.",
@@ -31,14 +37,14 @@
         "text": "Get Started Free",
         "href": "/signup",
         "variant": "primary",
-        "className": "bg-primary hover:bg-primary/90 text-primary-foreground h-[45px] px-8 text-lg rounded overflow-hidden font-semibold flex items-center"
+        "className": "bg-primary hover:bg-primary/90 text-primary-foreground h-[45px] px-8 text-lg rounded overflow-hidden font-semibold flex items-center justify-center w-full sm:w-auto"
       },
       {
         "id": "secondary",
         "text": "Sign In",
         "href": "/login",
         "variant": "outline",
-        "className": "border border-border/40 rounded text-primary hover:bg-border/10 px-8 h-[45px] text-lg flex items-center"
+        "className": "border border-border/40 rounded text-primary hover:bg-border/10 px-8 h-[45px] text-lg flex items-center justify-center w-full sm:w-auto"
       }
     ],
     "stats": [
@@ -70,7 +76,7 @@
     "enabled": true,
     "heading": {
       "text": "Why Choose Ping?",
-      "size": "text-3xl lg:text-4xl font-bold"
+      "size": "text-2xl sm:text-3xl lg:text-4xl font-bold"
     },
     "description": "Built for modern communication with features that make chatting effortless and enjoyable.",
     "items": [
@@ -129,7 +135,7 @@
       "className": "absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5"
     },
     "sections": {
-      "spacing": "py-20",
+      "spacing": "py-12 lg:py-20",
       "container": "container mx-auto px-6"
     }
   }

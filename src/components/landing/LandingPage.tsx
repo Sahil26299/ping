@@ -113,10 +113,29 @@ const LandingPage: React.FC = () => {
         <section
           className={`relative z-10 ${config.layout.sections.container} ${config.layout.sections.spacing}`}
         >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Top Column - Content  */}
+            {config.hero.animation.enabled && (
+              <div className="relative flex lg:hidden flex-col place-items-center lg:items-end w-full">
+                <div
+                  style={{
+                    maxWidth: "100%",
+                    width: "80%",
+                  }}
+                  className="flex flex-col place-items-center"
+                >
+                  <LottieAnimationProvider
+                    animationFile={chattingAnimationLanding}
+                    height="auto"
+                    width="80%"
+                  />
+                </div>
+              </div>
+            )}
+            
             {/* Left Column - Content */}
-            <div className="space-y-8">
-              <div className="space-y-4">
+            <div className="lg:space-y-8 space-y-4">
+              <div className="lg:space-y-4 space-y-2 lg:text-left text-center">
                 {renderHeading()}
                 <p className="text-xl text-muted-foreground leading-relaxed">
                   {config.hero.description}
@@ -124,7 +143,7 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col lg:justify-start sm:justify-center sm:flex-row gap-4">
                 {config.hero.ctaButtons.map((button) => (
                   <Link
                     key={button.id}
@@ -137,7 +156,7 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* Stats */}
-              <div className="flex items-center space-x-8 pt-8">
+              <div className="flex flex-wrap items-center lg:justify-start justify-center gap-8 lg:pt-8 pt-4">
                 {config.hero.stats.map((stat) => (
                   <div key={stat.id} className="text-center">
                     <div className="text-2xl font-bold text-primary">
@@ -153,12 +172,19 @@ const LandingPage: React.FC = () => {
 
             {/* Right Column - Animated Graphics */}
             {config.hero.animation.enabled && (
-              <div className="relative flex flex-col items-end">
-                <LottieAnimationProvider
-                  animationFile={chattingAnimationLanding}
-                  height={config.hero.animation.height}
-                  width={config.hero.animation.width}
-                />
+              <div className="relative lg:flex hidden flex-col items-center lg:items-end w-full">
+                <div
+                  style={{
+                    maxWidth: "100%",
+                    width: config.hero.animation.width,
+                  }}
+                >
+                  <LottieAnimationProvider
+                    animationFile={chattingAnimationLanding}
+                    height="auto"
+                    width="100%"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -206,7 +232,7 @@ const LandingPage: React.FC = () => {
           className={`relative z-10 ${config.layout.sections.container} ${config.layout.sections.spacing}`}
         >
           <div
-            className={`text-center ${config.cta.background} rounded-2xl p-12`}
+            className={`text-center ${config.cta.background} rounded-2xl p-6 lg:p-12`}
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
               {config.cta.heading}
