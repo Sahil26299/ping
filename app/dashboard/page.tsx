@@ -431,6 +431,7 @@ function Page() {
         recipientDetails={recipientDetails}
         usersList={usersList}
         listLoading={listLoading}
+        partLoader={loader}
         chatList={userChatList}
         handleSelectUser={handleSelectUser}
         handleSendMessage={handleSendMessage}

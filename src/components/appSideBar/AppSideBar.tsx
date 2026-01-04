@@ -479,6 +479,7 @@ export function AppSidebar({
   usersList,
   userDetails,
   listLoading,
+  partLoader,
   chatList,
   handleSelectUser,
   handleSendMessage,
@@ -488,6 +489,7 @@ export function AppSidebar({
   userDetails: userType | GenericObjectInterface;
   usersList: userType[];
   listLoading: boolean;
+  partLoader: "" | "messages" | "chats";
   chatList: GenericObjectInterface[];
   handleSelectUser: (selectedUser: userType, chatId: string) => void;
   handleSendMessage: (message: string, chat_id: string | null, recipientId: string | null) => void;
@@ -699,7 +701,7 @@ export function AppSidebar({
             placeholders={["Users", "Groups"]}
           />
         </SidebarGroup>
-        {listLoading ? (
+        {(listLoading || partLoader === "chats") ? (
           <div className="flex flex-col gap-3 px-2">
             {[1, 2, 3, 4, 5]?.map((el) => (
               <div key={el} className="flex items-center gap-2">
