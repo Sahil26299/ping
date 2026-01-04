@@ -87,7 +87,7 @@ export default function Navbar({
         </NavigationMenuItem>
       </NavigationMenuList>
       {(recipientDetails && recipientDetails?.username && (
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2 relative">
           <Avatar className="h-8 w-8 rounded-full bg-primary overflow-hidden flex items-center justify-center">
             <AvatarImage
               src={recipientDetails.profilePicture}
@@ -103,11 +103,11 @@ export default function Navbar({
               {recipientDetails?.username}
             </span>
             {recipientDetails?.isOnline ? (
-              <span className="text-[11px] font-medium text-green-500 leading-3.5">
+              <span className="text-[11px] font-medium text-green-500 leading-3.5 absolute -bottom-[2px]">
                 Online
               </span>
             ) : (
-              <span className="text-[11px] text-slate-400 leading-3.5">
+              <span className="text-[11px] w-[160px] text-slate-400 leading-3.5 absolute -bottom-[2px] line-clamp-1">
                 {recipientDetails?.lastActive ? `Last seen ${dayjs(recipientDetails?.lastActive).fromNow()}` : "Offline"}
               </span>
             )}

@@ -29,13 +29,8 @@ import CustomSearchInput from "../animatedSeachInput/CustomSearchInput";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createUserChats,
-  emptySessionStorage,
   GenericObjectInterface,
   inputChangeEventType,
-  keys,
-  logoutUser,
-  postChatMessages,
-  setSessionStorageItem,
   updateUserProfile,
   userType,
 } from "@/src/utilities";
@@ -406,7 +401,7 @@ function ChatListItem({
         }`}
       >
         <div>
-          <section className="flex items-center gap-2">
+          <section className="flex items-center gap-2 w-[95%]">
             <UserAvatar user={chatRecipient} />
             <section className="flex flex-col w-4/5">
               <span
@@ -417,13 +412,6 @@ function ChatListItem({
                 }`}
               >
                 {chatRecipient?.username}
-                {chatRecipient?.isOnline && (
-                  <div className="h-[6px] w-[6px] rounded-full bg-green-600">
-                    {chat?.unReadCount !== 0 && (
-                      <div className="h-[6px] w-[6px] rounded-full bg-green-200 animate-ping" />
-                    )}
-                  </div>
-                )}
               </span>
               <div
                 dangerouslySetInnerHTML={{
@@ -493,7 +481,8 @@ export function AppSidebar({
   listLoading,
   chatList,
   handleSelectUser,
-  handleSendMessage
+  handleSendMessage,
+  handleLogout,
 }: {
   recipientDetails: userType | GenericObjectInterface;
   userDetails: userType | GenericObjectInterface;
@@ -502,6 +491,7 @@ export function AppSidebar({
   chatList: GenericObjectInterface[];
   handleSelectUser: (selectedUser: userType, chatId: string) => void;
   handleSendMessage: (message: string, chat_id: string | null, recipientId: string | null) => void;
+  handleLogout: () => void;
 }) {
   const router = useRouter();
   const [searchedText, setSearchedText] = useState("");
@@ -545,16 +535,6 @@ export function AppSidebar({
 
     return result;
   }, [searchedText, usersList]);
-
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (error) {
-    } finally {
-      emptySessionStorage();
-      router.push("/login");
-    }
-  };
 
   const handleProfilePicChange = () => {
     if (fileInputRef?.current) {
@@ -744,9 +724,7 @@ export function AppSidebar({
                 {chatList?.length > 0 ? (
                   <SidebarMenu>
                     {chatList.map((chat: GenericObjectInterface) => {
-                      const chatRecipient = extractRecipientFromChatUsers(
-                        chat?.users
-                      );
+                      const chatRecipient = chat?.recipient;
                       
                       if (chatRecipient) {
                         return (

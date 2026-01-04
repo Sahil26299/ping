@@ -31,6 +31,8 @@ export const socketEvents = {
   RECEIVE_MESSAGES_IN_CHAT: "chat-message", // when user is viewing messages inside a particular chat
   RECEIVE_NEW_CHAT: "user-message", // when user is on dashboard, without any of the chat opened and new message is received
   DISCONNECT: "disconnect",
+  USER_ONLINE: "user-online", // when user logs in to dashboard
+  USER_OFFLINE: "user-offline", // when user logs out from dashboard
 };
 
 export const makeApiRequest = async <T>(

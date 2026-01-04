@@ -18,9 +18,13 @@ import {
   socketEvents,
   userType,
   markChatAsRead,
+  endpoints,
+  headersList,
+  logoutUser,
+  emptySessionStorage,
 } from "@/src/utilities";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { io, Socket } from "socket.io-client";
 
@@ -42,6 +46,8 @@ function Page() {
   const [loader, setLoader] = useState<"" | "messages" | "chats">("");
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const socketRef = useRef<Socket | null>(null);
 
   // Helper function to add message with uniqueness check
   const addMessageIfUnique = (newMessage: chatMessage) => {
@@ -60,6 +66,7 @@ function Page() {
     // Step 1.
     // Initialize socket io connection
     const socketInstance = io(
+      // "http://localhost:3001",
       "chat-socket-server-production-478b.up.railway.app",
       {
         withCredentials: true,
@@ -68,26 +75,29 @@ function Page() {
     );
     // set socket instance to a state variable to use it throughout the screen
     setSocket(socketInstance);
+    socketRef.current = socketInstance;
 
     // Step 2.
     // join user room (dashboard) to receive latest chats
     if (user?.uid) {
       socketInstance?.emit(socketEvents.JOIN_USER_ROOM, user?.uid);
-      console.log(`User ${user?.uid} joined the dashboard.`);
+      // console.log(`User ${user?.uid} joined the dashboard.`);
     }
+
+    const recipient = getSessionStorageItem(keys.RECIPIENT_SELECTED);
 
     // Step 3.
     // Start listening for new chats.
     socketInstance.on(socketEvents.RECEIVE_NEW_CHAT, (msgData) => {
-      const recipient = getSessionStorageItem(keys.RECIPIENT_SELECTED);
-      console.log(msgData, "joined user recved msgData");
       setUserChatList((prev) => {
-        const alreadyExists = prev?.some((chat) => chat.chatRef === msgData.chatId);
-        if(alreadyExists){
+        const alreadyExists = prev?.some(
+          (chat) => chat.chatRef === msgData.chatId
+        );
+        if (alreadyExists) {
           const updatedChats = prev?.map((chat) => {
             if (chat.chatRef === msgData.chatId) {
               let finalCount = chat.unReadCount + msgData?.unreadIncrement;
-  
+
               // if recipient is selected AND matches the sender
               if (
                 recipient &&
@@ -98,7 +108,7 @@ function Page() {
                 // Chat is open, mark as read in DB so it doesn't show as unread on refresh
                 markChatAsRead(msgData.chatId);
               }
-  
+
               return {
                 ...chat,
                 lastMessage: msgData?.lastMessage,
@@ -107,12 +117,54 @@ function Page() {
             }
             return chat;
           });
-  
+
           return updatedChats?.sort(
             (a, b) => a?.lastMessage?.sentAt - b?.lastMessage?.sentAt
           );
-        }else{
-          fetchChats(user)
+        } else {
+          fetchChats(user);
+          return prev;
+        }
+      });
+    });
+
+    // Step 4. Below start listening to active status of recipient
+    socketInstance?.on(socketEvents.USER_ONLINE, (userId: string) => {
+      console.log("User active status: online", userId);
+      setOnlineUsers((prev) =>
+        prev.includes(userId) || user?.uid === userId ? prev : [...prev, userId]
+      );
+
+      setRecipientDetails((prev) => {
+        setSessionStorageItem(keys.RECIPIENT_SELECTED, {
+          ...prev,
+          isOnline: true,
+        });
+        if (prev && prev?.uid === userId && !prev?.isOnline) {
+          return { ...prev, isOnline: true };
+        } else {
+          return prev;
+        }
+      });
+    });
+    socketInstance?.on(socketEvents.USER_OFFLINE, (userId: string) => {
+      console.log("User active status: offline", userId);
+      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+
+      setRecipientDetails((prev) => {
+        setSessionStorageItem(keys.RECIPIENT_SELECTED, {
+          ...prev,
+          isOnline: false,
+          lastActive: new Date(),
+        });
+
+        if (prev && prev?.uid === userId && prev?.isOnline) {
+          return {
+            ...prev,
+            isOnline: false,
+            lastActive: new Date(),
+          };
+        } else {
           return prev;
         }
       });
@@ -146,11 +198,44 @@ function Page() {
     };
     checkAuth();
 
-    // Cleanup: disconnect socket when component unmounts
+    const handleBeforeUnload = () => {
+      handleSetUserOffline();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      socket?.disconnect();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      handleSetUserOffline();
     };
   }, []);
+
+  const handleSetUserOffline = async (logout: boolean = true) => {
+    // Just remove the listener, don't disconnect the entire socket
+    socketRef.current?.off(socketEvents.RECEIVE_MESSAGES_IN_CHAT);
+    // also stop listening to active status of recipient
+    socketRef.current?.off(socketEvents.USER_ONLINE);
+    socketRef.current?.off(socketEvents.USER_OFFLINE);
+    socketRef.current?.disconnect();
+    if (logout) {
+      await fetch(endpoints.AUTH_ME, {
+        method: "PATCH",
+        headers: headersList,
+        body: JSON.stringify({ isOnline: false, lastActive: new Date() }),
+        keepalive: true, // special key to keep the request ongoing even when browser shuts down
+      }).catch((err) => console.error("Failed to update offline status", err));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      handleSetUserOffline(false);
+      await logoutUser();
+    } catch (error) {
+    } finally {
+      emptySessionStorage();
+      router.push("/login");
+    }
+  };
 
   // 2. Fetch Global Users
   const fetchUsers = async () => {
@@ -165,29 +250,51 @@ function Page() {
   };
 
   // 3. Fetch Chats (Polling)
+  // 3. Fetch Chats (Polling)
   const fetchChats = async (
     user: userType | GenericObjectInterface = userDetails
   ) => {
     setLoader("chats");
     try {
       const res: GenericObjectInterface = await fetchUserChats();
+      const onlineIds = new Set<string>();
+
       // Map API chats to frontend expected format
-      const mappedChats = res?.data?.chats?.map((c: any) => ({
-        chatRef: c._id,
-        users: c.participants?.map((u: userType) => ({ ...u, uid: u._id })),
-        lastMessage: c.lastMessage
-          ? {
-              text: c.lastMessage.content,
-              sentAt: c.lastMessage.timestamp,
-              sender: {
-                ...c.lastMessage.sender,
-                uid: c.lastMessage.sender._id,
-              },
-            }
-          : null,
-        unReadCount: c.unreadCounts?.[user.uid as string] || 0,
-      }));
-      // establishSocketConnection(user?.uid); // Removed to prevent duplicate sockets
+      const mappedChats = res?.data?.chats?.map((c: any) => {
+        const recipient = c.participants?.find(
+          (u: userType) => u._id !== user.uid
+        );
+
+        if (recipient?._id) {
+          if (recipient?.isOnline) {
+            onlineIds.add(recipient._id);
+          }
+        }
+
+        return {
+          chatRef: c._id,
+          users: c.participants?.map((u: userType) => ({ ...u, uid: u._id })),
+          lastMessage: c.lastMessage
+            ? {
+                text: c.lastMessage.content,
+                sentAt: c.lastMessage.timestamp,
+                sender: {
+                  ...c.lastMessage.sender,
+                  uid: c.lastMessage.sender._id,
+                },
+              }
+            : null,
+          recipient: { ...recipient, uid: recipient._id },
+          unReadCount: c.unreadCounts?.[user.uid as string] || 0,
+        };
+      });
+
+      setOnlineUsers((prev) => {
+        const newSet = new Set([...prev, ...Array.from(onlineIds)]);
+        if (user?.uid) newSet.delete(user.uid);
+        return Array.from(newSet);
+      });
+
       setUserChatList(mappedChats);
     } catch (error) {
       console.error("Fetch chats error", error);
@@ -257,12 +364,7 @@ function Page() {
       };
       addMessageIfUnique(newMessage);
 
-      socket?.emit(
-        socketEvents.SEND_MESSAGE,
-        newMessage,
-        recipientId,
-        chat_id
-      );
+      socket?.emit(socketEvents.SEND_MESSAGE, newMessage, recipientId, chat_id);
 
       fetchChats(); // Refresh sidebar list
     } catch (error) {
@@ -271,12 +373,16 @@ function Page() {
   };
 
   const handleSelectUser = (selectedUser: userType, chatId: string) => {
+    const modifiedSelectedUser = {
+      ...selectedUser,
+      isOnline: onlineUsers.includes(selectedUser.uid),
+    };
     // Set chat ID and User details in sessionStorage
     setSessionStorageItem(keys.CHAT_ID, chatId);
-    setSessionStorageItem(keys.RECIPIENT_SELECTED, selectedUser);
+    setSessionStorageItem(keys.RECIPIENT_SELECTED, modifiedSelectedUser);
 
     // Set recipient details and chat ID
-    setRecipientDetails(selectedUser);
+    setRecipientDetails(modifiedSelectedUser);
     setChatId(chatId);
 
     // Join chat room (Socket) to start listening to new messages (real time connection)
@@ -328,6 +434,7 @@ function Page() {
         chatList={userChatList}
         handleSelectUser={handleSelectUser}
         handleSendMessage={handleSendMessage}
+        handleLogout={handleLogout}
       />
       <main className="w-full">
         <section className="h-full w-full">
