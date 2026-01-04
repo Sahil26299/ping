@@ -87,10 +87,12 @@ function MessageInputWithSubmit({
     <form
       onSubmit={(ev: formSubmitEventType) => {
         ev.preventDefault();
-        handleSubmitMessage(inputMessage.textHTML);
-        // Clear the editor using TipTap's commands API
-        editor?.commands.clearContent();
-        setInputMessage({ text: "", textHTML: "" });
+        if(inputMessage?.text !== "" && inputMessage?.textHTML !== ""){
+          handleSubmitMessage(inputMessage.textHTML);
+          // Clear the editor using TipTap's commands API
+          editor?.commands.clearContent();
+          setInputMessage({ text: "", textHTML: "" });
+        }
       }}
       className={`flex items-center gap-2 justify-between h-full`}
     >
