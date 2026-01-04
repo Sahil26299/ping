@@ -244,8 +244,6 @@ function Page() {
       setUsersList(res?.data?.users);
     } catch (error) {
       console.error(error);
-    } finally {
-      setListLoading(false);
     }
   };
 
@@ -300,6 +298,7 @@ function Page() {
       console.error("Fetch chats error", error);
     } finally {
       setLoader("");
+      setListLoading(false);
     }
   };
 
@@ -431,7 +430,6 @@ function Page() {
         recipientDetails={recipientDetails}
         usersList={usersList}
         listLoading={listLoading}
-        partLoader={loader}
         chatList={userChatList}
         handleSelectUser={handleSelectUser}
         handleSendMessage={handleSendMessage}
