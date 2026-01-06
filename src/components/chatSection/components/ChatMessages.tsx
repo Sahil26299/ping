@@ -7,28 +7,40 @@ function ChatMessages({
   recipientDetails,
   userDetails,
 }: ChatMessagesProps) {
-  
   return (
     <div className="flex flex-col w-full h-full gap-3">
       {messages?.length > 0 &&
-        messages?.map((message: chatMessage) => {          
+        messages?.map((message: chatMessage) => {
           return (
             <section
               key={message?.messageId}
               className={`flex gap-2 p-2 rounded-md w-fit max-w-4/5 ${
-                message?.sender?.uid === userDetails?.uid ? "bg-black/30 self-end flex-row-reverse" : ""
+                message?.sender?.uid === userDetails?.uid
+                  ? "bg-black/30 self-end flex-row-reverse"
+                  : ""
               }`}
             >
               <Avatar
-                title={message?.sender?.uid === userDetails?.uid ? "You" : "Your friend"}
+                title={
+                  message?.sender?.uid === userDetails?.uid
+                    ? "You"
+                    : "Your friend"
+                }
                 className="h-6 w-6 rounded-full overflow-hidden"
               >
                 <AvatarImage
-                  src={message?.sender?.uid === userDetails?.uid ? userDetails?.profilePicture : recipientDetails?.profilePicture}
+                  src={
+                    message?.sender?.uid === userDetails?.uid
+                      ? userDetails?.profilePicture
+                      : recipientDetails?.profilePicture
+                  }
                   className="object-cover"
                 />
               </Avatar>
-              <div className="text-sm" dangerouslySetInnerHTML={{"__html": message.text}} ></div>
+              <div
+                className="text-sm"
+                dangerouslySetInnerHTML={{ __html: message.text }}
+              ></div>
             </section>
           );
         })}

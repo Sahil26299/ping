@@ -33,6 +33,8 @@ export const socketEvents = {
   DISCONNECT: "disconnect",
   USER_ONLINE: "user-online", // when user logs in to dashboard
   USER_OFFLINE: "user-offline", // when user logs out from dashboard
+  START_TYPING: "start-typing", // when user starts typing, emit this event
+  USER_START_TYPING: "user-start-typing", // listen to this event to check whether has started typing
 };
 
 export const makeApiRequest = async <T>(

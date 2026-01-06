@@ -35,11 +35,13 @@ function ThemeToggleButton() {
 interface NavbarProps {
   variant?: "dashboard" | "landing";
   recipientDetails?: userType | GenericObjectInterface;
+  showTypingIndicator?: boolean;
 }
 
 export default function Navbar({
   variant = "dashboard",
   recipientDetails,
+  showTypingIndicator
 }: NavbarProps) {
   
   // Landing page variant
@@ -103,8 +105,8 @@ export default function Navbar({
               {recipientDetails?.username}
             </span>
             {recipientDetails?.isOnline ? (
-              <span className="text-[11px] font-medium text-green-500 leading-3.5 absolute -bottom-[2px]">
-                Online
+              <span className={`text-[11px] ${showTypingIndicator ? "text-amber-300 animate-pulse font-semibold" : "font-medium text-green-500"} leading-3.5 absolute -bottom-[2px]`}>
+                {showTypingIndicator ? "Typing..." : "Online"}
               </span>
             ) : (
               <span className="text-[11px] w-[160px] text-slate-400 leading-3.5 absolute -bottom-[2px] line-clamp-1">

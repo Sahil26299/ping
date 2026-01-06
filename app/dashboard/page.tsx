@@ -28,6 +28,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { io, Socket } from "socket.io-client";
 
+let typingTimeout: NodeJS.Timeout;
+
 function Page() {
   const router = useRouter();
   const [recipientDetails, setRecipientDetails] = useState<
@@ -47,6 +49,8 @@ function Page() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    const [showTypingIndicator, setShowTypingIndicator] = useState(false);
+  
   const socketRef = useRef<Socket | null>(null);
 
   // Helper function to add message with uniqueness check
@@ -212,6 +216,7 @@ function Page() {
   const handleSetUserOffline = async (logout: boolean = true) => {
     // Just remove the listener, don't disconnect the entire socket
     socketRef.current?.off(socketEvents.RECEIVE_MESSAGES_IN_CHAT);
+    socketRef?.current?.off(socketEvents.USER_START_TYPING);
     // also stop listening to active status of recipient
     socketRef.current?.off(socketEvents.USER_ONLINE);
     socketRef.current?.off(socketEvents.USER_OFFLINE);
@@ -306,10 +311,27 @@ function Page() {
    * Listen for individual chat messages (when user is viewing that chat)
    * @param socketInstance Socket instance to listen on
    */
-  const listenForChatMessages = (socketInstance: Socket | null = socket) => {
+  const listenForChatMessages = (socketInstance: Socket | null = socketRef.current) => {
+    // start listening to new messages in the chat
     socketInstance?.on(socketEvents.RECEIVE_MESSAGES_IN_CHAT, (msg) => {
       addMessageIfUnique(msg);
     });
+
+    // start listening to user's Typing event
+    socketInstance?.on(socketEvents.USER_START_TYPING, (userId: string) => {
+        // console.log("user started typing", userId);
+        setShowTypingIndicator(true);
+        // Clear previous timeout
+        if (typingTimeout) {
+          clearTimeout(typingTimeout);
+        }
+
+        // Auto-stop typing after 3 seconds
+        typingTimeout = setTimeout(() => {
+          // console.log("user stopped typing", userId);
+          setShowTypingIndicator(false);
+        }, 3000);
+      });
   };
 
   /**
@@ -414,7 +436,8 @@ function Page() {
     removeSessionStorageItem(keys.CHAT_ID);
     removeSessionStorageItem(keys.RECIPIENT_SELECTED);
     // Just remove the listener, don't disconnect the entire socket
-    socket?.off(socketEvents.RECEIVE_MESSAGES_IN_CHAT);
+    socketRef?.current?.off(socketEvents.RECEIVE_MESSAGES_IN_CHAT);
+    socketRef?.current?.off(socketEvents.USER_START_TYPING);
   };
 
   useEffect(() => {
@@ -437,13 +460,14 @@ function Page() {
       />
       <main className="w-full">
         <section className="h-full w-full">
-          <Navbar recipientDetails={recipientDetails} />
+          <Navbar recipientDetails={recipientDetails} showTypingIndicator={showTypingIndicator} />
           <ChatSection
             recipientDetails={recipientDetails}
             handleSendMessage={handleSendMessage}
             messagesArray={messagesArray}
             handleDeselectUser={handleDeselectUser}
             loader={loader}
+            socket={socket}
           />
         </section>
       </main>

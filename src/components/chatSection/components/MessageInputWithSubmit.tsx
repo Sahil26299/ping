@@ -10,9 +10,11 @@ import { formSubmitEventType, inputMessageType } from "@/src/utilities";
 function MessageInputWithSubmit({
   handleSubmitMessage,
   handleDeselectUser,
+  handleChangeInput
 }: {
   handleSubmitMessage: (param: string) => void;
   handleDeselectUser: () => void;
+  handleChangeInput: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
   const [inputMessage, setInputMessage] = useState<inputMessageType>({
@@ -39,6 +41,7 @@ function MessageInputWithSubmit({
       const html = editor.getHTML();
       const text = editor.getText();
       setInputMessage({ text, textHTML: html });
+      handleChangeInput()
     },
     editorProps: {
       attributes: {
