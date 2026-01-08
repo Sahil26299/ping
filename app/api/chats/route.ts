@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import Chat from "@/models/Chats";
+import "@/models/User"; // Register User model
 import dbConnect from "@/lib/db";
 import { cookies } from "next/headers";
 

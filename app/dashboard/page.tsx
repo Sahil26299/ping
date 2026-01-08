@@ -318,7 +318,7 @@ function Page() {
     });
 
     // start listening to user's Typing event
-    socketInstance?.on(socketEvents.USER_START_TYPING, (userId: string) => {
+    socketInstance?.on(socketEvents.USER_START_TYPING, () => {
         // console.log("user started typing", userId);
         setShowTypingIndicator(true);
         // Clear previous timeout
@@ -330,7 +330,7 @@ function Page() {
         typingTimeout = setTimeout(() => {
           // console.log("user stopped typing", userId);
           setShowTypingIndicator(false);
-        }, 3000);
+        }, 2000);
       });
   };
 

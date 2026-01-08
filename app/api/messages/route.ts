@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import Message from "@/models/Message";
 import Chat from "@/models/Chats";
+import "@/models/User"; // Using User model in refs
 import dbConnect from "@/lib/db";
 import { cookies } from "next/headers";
 
